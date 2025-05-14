@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f03fea98-4e11-43eb-bb9d-c2d779789641" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/Diploma.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/App.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/AppConfig.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/AppContext.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/common/Colors.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/custom_elements/ButtonsPanel.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/custom_elements/DrawableRect.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/custom_elements/StorageBox.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/custom_elements/Workspace.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/packers/PhysPacker.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/packers/SimplePackerThread.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/screens/Box2dScreen.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/screens/ConfigScreen.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/screens/MainScreen.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/screens/PhysScreen.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/screens/base/ScreenBase.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/screens/base/ScreenManager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/themes/theme.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera/CameraController.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera/aruco.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera/cam.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera/detectors/ArucoDetector.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera/detectors/OpencvBoxDetector.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera/detectors/YoloBoxDetector.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera/trash/camera_calibration.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera/trash/detectors.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera/trash/marker_gen.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/camera/trash/workflow.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/old.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="DEPENDENCY_CHECKER_PROBLEMS_TAB" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="2w0Kq564gCBx0v8LjMQRCFyiJOL" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.App.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.CameraController.executor&quot;: &quot;Run&quot;,
+    &quot;Python.MainScreenModel.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.SimplePacker.executor&quot;: &quot;Run&quot;,
+    &quot;Python.YoloBoxDetector.executor&quot;: &quot;Run&quot;,
+    &quot;Python.angry_bird.executor&quot;: &quot;Run&quot;,
+    &quot;Python.app.executor&quot;: &quot;Run&quot;,
+    &quot;Python.cam.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.old.executor&quot;: &quot;Run&quot;,
+    &quot;Python.workflow.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Itis/Diploma/camera&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;Errors&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Itis\Diploma\camera" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Itis\Diploma\camera" />
+      <recent name="D:\Itis\Diploma\app\screens\base" />
+      <recent name="D:\Itis\Diploma\camera\trash" />
+      <recent name="D:\Itis\Diploma\camera\detectors" />
+      <recent name="D:\Itis\Diploma\app\screens" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.main">
+    <configuration name="App" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Diploma" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/app" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/App.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="CameraController" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Diploma" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/camera" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/camera/CameraController.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="Diploma" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.App" />
+        <item itemvalue="Python.CameraController" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-d7ad00fb9fc3-c546a90a8094-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.23726.102" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f03fea98-4e11-43eb-bb9d-c2d779789641" name="Changes" comment="" />
+      <created>1745173238456</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1745173238456</updated>
+    </task>
+    <servers />
+  </component>
+</project>

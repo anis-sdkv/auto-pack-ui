@@ -1,0 +1,175 @@
+import random
+
+import cv2
+import numpy as np
+import pygame
+from pygame import Event
+from pygame_gui import elements
+
+from app.AppContext import AppContext
+from app.common import Colors
+from app.custom_elements.ButtonsPanel import ButtonsPanel
+from app.custom_elements.DrawableRect import DrawableRect
+from app.custom_elements.StorageBox import StorageBox
+from app.custom_elements.Workspace import Workspace
+from app.packers.SimplePackerThread import SimplePackerThread
+from app.screens.PhysScreen import PhysScreen
+from app.screens.base.ScreenBase import ScreenBase
+from camera.CameraController import CameraController, ActionState
+
+
+class MainScreen(ScreenBase):
+    def __init__(self, context: AppContext):
+        super().__init__(context)
+
+        self._init_ui_elements()
+
+        self.camera_controller: CameraController = self.context.camera_controller
+        self.camera_controller.on_camera_connected.append(self._on_camera_connected)
+
+    def _init_ui_elements(self):
+        self.workspace = Workspace(pygame.Rect(0, 0, 0, 0))
+        self.message_box = elements.UITextBox(
+            html_text='',
+            relative_rect=pygame.Rect(0, 0, 0, 0),
+            manager=self.context.ui_manager
+        )
+        self.storage_box = StorageBox(pygame.Rect(0, 0, 0, 0))
+        self.buttons_panel = ButtonsPanel(pygame.Rect(0, 0, 200, 0), self.context.ui_manager)
+
+        self.update_layout(self.context.surface.size)
+
+    def update_layout(self, size):
+        screen_w, screen_h = size
+        margin = 30
+        gap = 20
+        panel_width = self.buttons_panel.rect.w
+        divider_width = 2
+
+        total_gap = gap * 2
+        usable_width = screen_w - margin * 2 - panel_width - total_gap
+
+        box_width = usable_width // 2
+        box_height = min(int(screen_h * 0.6), 400)
+        workspace_height = box_width * self.workspace.camera_resolution_ratio
+        new_workspace = pygame.Rect(margin, (screen_h - workspace_height) // 2, box_width, workspace_height)
+        self.workspace.update_rect(new_workspace)
+
+        message_margin_top = 10
+        message_height = 60
+        message_width = self.workspace.rect.width
+
+        message_x = self.workspace.rect.x
+        message_y = self.workspace.rect.bottom + message_margin_top
+
+        self.message_box.set_relative_position((message_x, message_y))
+        self.message_box.set_dimensions((message_width, message_height))
+
+        new_storage = pygame.Rect(new_workspace.right + gap, (screen_h - box_height) // 2, box_width, box_height)
+        self.storage_box.rect.update(new_storage)
+
+        new_buttons = pygame.Rect(new_storage.right + gap, 0, panel_width, screen_h)
+        self.buttons_panel.rect.update(new_buttons)
+        self.buttons_panel.update_layout()
+
+        self._dividers = [
+            (new_workspace.x + box_width + gap // 2, 0, divider_width, screen_h),  # между Workspace и Storage
+            (new_storage.x + box_width + gap // 2, 0, divider_width, screen_h)  # между Storage и кнопками
+        ]
+
+    def handle_resize(self, new_size):
+        self.update_layout(new_size)
+
+    def update(self, dt):
+        self.message_box.set_text(self.camera_controller.connection_status)
+
+        cam_button_message = (
+            "включить камеру" if self.camera_controller.capturing == ActionState.STOPPED else
+            "выключить камеру" if self.camera_controller.capturing == ActionState.STARTED else
+            "подождите.."
+        )
+        process_button_message = (
+            "начать обработку" if self.camera_controller.processing == ActionState.STOPPED else
+            "остановить обработку" if self.camera_controller.processing == ActionState.STARTED else
+            "подождите.."
+        )
+
+        self.buttons_panel.camera_button.set_text(cam_button_message)
+        self.buttons_panel.process_button.set_text(process_button_message)
+
+        self.workspace.camera_frame = self.camera_controller.get_frame()
+
+        if self.camera_controller.processing.STARTED:
+            self.update_camera_process_result()
+
+    def update_camera_process_result(self):
+        boxes = self.camera_controller.get_boxes()
+        self.workspace.boxes = boxes
+        boxes = [cv2.minAreaRect(box) for box in boxes]
+        self.workspace.detected_boxes = [
+            DrawableRect(pygame.Rect(x, y, w, h), angle,
+                         self.cut_rect(self.workspace.camera_frame, ((x, y), (w, h), angle)))
+            for ((x, y), (w, h), angle) in boxes]
+
+        aruco_markers = self.camera_controller.get_markers()
+        self.workspace.detected_markers = aruco_markers
+
+    def cut_rect(self, frame, rect):
+        center = rect[0]
+        size = rect[1]
+        angle = rect[2]
+
+        rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+        rotated = cv2.warpAffine(frame, rotation_matrix, (frame.shape[1], frame.shape[0]))
+
+        w, h = size
+        cropped = cv2.getRectSubPix(rotated, (int(w), int(h)), center)
+        cropped_rgb = cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB)
+        cropped_rgb = np.rot90(cropped_rgb)
+        return cropped_rgb
+
+    def draw(self):
+        self.surface.fill(Colors.WHITE)
+        self.storage_box.draw(self.surface)
+        self.workspace.draw(self.surface)
+        self.buttons_panel.draw(self.surface)
+        self.draw_dividers(self.surface)
+
+    def draw_dividers(self, surface):
+        divider_color = (180, 180, 180)
+        for x, y, w, h in getattr(self, '_dividers', []):
+            pygame.draw.rect(surface, divider_color, pygame.Rect(x, y, w, h))
+
+    def handle_event(self, event: Event):
+        if event.ui_element == self.buttons_panel.gen_button:
+            self.workspace.create_random_items(10)
+        elif event.ui_element == self.buttons_panel.place_button:
+            self.place_to_box()
+        elif event.ui_element == self.buttons_panel.place_phys_button:
+            self.place_phys()
+
+        elif event.ui_element == self.buttons_panel.camera_button:
+            if self.camera_controller.capturing == ActionState.STOPPED:
+                self.camera_controller.start()
+            elif self.camera_controller.capturing == ActionState.STARTED:
+                self.camera_controller.stop()
+
+        elif event.ui_element == self.buttons_panel.process_button:
+            if self.camera_controller.processing == ActionState.STOPPED:
+                self.camera_controller.start_processing()
+            elif self.camera_controller.processing == ActionState.STARTED:
+                self.camera_controller.stop_processing()
+
+    def place_to_box(self):
+        packer = SimplePackerThread(self)
+        packer.start()
+
+    def place_phys(self):
+        pass
+        # self.screen_manager.switch_to(PhysScreen(self.context, self))
+
+    def _on_camera_connected(self):
+        resolution = self.camera_controller.get_camera_resolution()
+        if resolution is not None:
+            self.workspace.set_camera_resolution(*resolution)
+            self.update_layout(self.surface.size)
