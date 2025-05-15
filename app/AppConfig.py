@@ -8,5 +8,5 @@ class AppConfig:
 
     def __init__(self):
         self.stream_url = AppConfig.DEFAULT_VIDEO_URL
-        self.box_width = 0
-        self.box_height = 0
+        self.box_width = 0.4
+        self.box_height = 0.6

@@ -9,9 +9,9 @@ class ScreenManager:
         self.current_screen: ScreenBase = None
         self.context = context
 
-    def switch_to(self, screen: type[ScreenBase]):
+    def switch_to(self, screen: type[ScreenBase], *args):
         self.context.ui_manager.clear_and_reset()
-        self.current_screen = screen(self.context)
+        self.current_screen = screen(self.context, *args)
 
     def handle_event(self, event):
         if self.current_screen:

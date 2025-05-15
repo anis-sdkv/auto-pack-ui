@@ -13,23 +13,27 @@ class ButtonsPanel:
     def _init_ui_elements(self, ui_manager: UIManager):
         self.gen_button = elements.UIButton(
             relative_rect=self.create_button_rect(),
-            text='create_items',
+            text='Сгенерировать',
             manager=ui_manager)
         self.place_button = elements.UIButton(
             relative_rect=self.create_button_rect(),
-            text='place',
+            text='Разместить NFDH',
             manager=ui_manager)
         self.place_phys_button = elements.UIButton(
             relative_rect=self.create_button_rect(),
-            text='place phys',
+            text='Разместить физ.',
             manager=ui_manager)
         self.camera_button = elements.UIButton(
             relative_rect=self.create_button_rect(),
-            text='camera OFF',
+            text='',
             manager=ui_manager)
         self.process_button = elements.UIButton(
             relative_rect=self.create_button_rect(),
-            text='process OFF',
+            text='',
+            manager=ui_manager)
+        self.fix_cam_button = elements.UIButton(
+            relative_rect=self.create_button_rect(),
+            text='',
             manager=ui_manager)
 
     def create_button_rect(self):
@@ -46,6 +50,7 @@ class ButtonsPanel:
         self.place_phys_button.set_relative_position((button_panel_x, button_panel_y + offset * 2))
         self.camera_button.set_relative_position((button_panel_x, button_panel_y + offset * 3))
         self.process_button.set_relative_position((button_panel_x, button_panel_y + offset * 4))
+        self.fix_cam_button.set_relative_position((button_panel_x, button_panel_y + offset * 5))
 
     def draw(self, surface: pygame.surface):
         self.ui_manager.draw_ui(surface)

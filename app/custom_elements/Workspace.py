@@ -61,7 +61,6 @@ class Workspace:
 
     def _render(self):
         self.subsurface.fill(self.fill_color)
-        print(len(self.generated_boxes))
         if self.camera_frame is not None:
             self._draw_camera_frame()
         else:
@@ -99,3 +98,5 @@ class Workspace:
             pygame.draw.rect(self.subsurface, box.back_color, box.rect)
             # points = (rect * self._camera_frame_scale_factor).astype(int).tolist()
             # pygame.draw.polygon(self.subsurface, Colors.GREEN, points, 2)
+
+

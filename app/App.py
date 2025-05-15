@@ -6,7 +6,6 @@ import pygame_gui
 from pygame import display
 
 from app.AppContext import AppContext
-from app.screens.ConfigScreen import ConfigScreen
 from app.screens.MainScreen import MainScreen
 from app.screens.base.ScreenManager import ScreenManager
 

@@ -46,6 +46,9 @@ class YoloBoxDetector:
             mask = masks[i]
             color = colors[i]
 
+            if mask.shape != img.shape[:2]:
+                mask = cv2.resize(mask, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
+
             colored_mask = np.zeros_like(img, dtype=np.uint8)
             for c in range(3):
                 colored_mask[:, :, c] = mask * color[c]

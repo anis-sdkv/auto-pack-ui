@@ -40,21 +40,22 @@ class ConfigScreen(ScreenBase):
                 object_id=object_id
             )
 
-        def input_field(offset_y):
+        def input_field(offset_y, init_text):
             return UITextEntryLine(
                 relative_rect=Rect((50, offset_y), (input_width, input_height)),
+                initial_text=init_text,
                 manager=self.ui_manager,
                 container=self.panel
             )
 
         label("Ссылка на IP-камеру", start_y)
-        self.stream_input = input_field(start_y + 25)
+        self.stream_input = input_field(start_y + 25, self.config.stream_url)
 
         label("Ширина ящика (см)", start_y + spacing)
-        self.box_width_input = input_field(start_y + spacing + 25)
+        self.box_width_input = input_field(start_y + spacing + 25, self.config.box_width)
 
         label("Высота ящика (см)", start_y + spacing * 2)
-        self.box_height_input = input_field(start_y + spacing * 2 + 25)
+        self.box_height_input = input_field(start_y + spacing * 2 + 25, self.config.box_height)
 
         self.message_label = UITextBox(
             html_text="",

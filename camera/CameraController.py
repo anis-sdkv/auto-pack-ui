@@ -49,6 +49,8 @@ class CameraController:
         connecting.start()
 
     def start_processing(self):
+        if self.capturing != ActionState.STARTED:
+            return
         self.processing = ActionState.STARTING
         self.processing_thread = threading.Thread(target=self._processing_loop, daemon=True)
         self.processing_thread.start()
@@ -105,6 +107,7 @@ class CameraController:
             time.sleep(delay)
 
         self.connection_status = "Ошибка: Не удалось переподключиться к камере."
+        self.capturing = ActionState.STOPPED
 
     def _start_capture(self):
         self.capture_thread = threading.Thread(target=self._capture_loop, daemon=True)

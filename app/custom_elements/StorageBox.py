@@ -1,12 +1,15 @@
 import pygame
+from pygame.display import update
+from pygame.examples.testsprite import update_rects
+
 from app.common import Colors
 from app.custom_elements.DrawableRect import DrawableRect
 from typing import List
 
 
-class StorageBox():
-    def __init__(self, rect: pygame.Rect):
-        self.rect = rect
+class StorageBox:
+    def __init__(self, box_real_w, box_real_h):
+        self.aspect_ratio =  box_real_h / box_real_w
 
         self.fill_color = Colors.WHITE
         self.border_color = Colors.BLACK
@@ -14,15 +17,29 @@ class StorageBox():
 
         self.placeables: List[DrawableRect] = []
 
+    def update_rect(self, rect: pygame.Rect):
+        self.rect = rect
+        self.subsurface = pygame.Surface(rect.size)
+
     def draw(self, surface: pygame.Surface):
-        surface.fill(self.fill_color, self.rect)
-        pygame.draw.rect(surface, self.border_color, self.rect, self.border_width)
+        surface.blit(self._render(), self.rect.topleft)
+
+    def _render(self):
+        self.subsurface.fill(self.fill_color)
 
         for item in self.placeables:
-            sprite = pygame.surfarray.make_surface(item.image)
-            surface.blit(sprite, (item.x, item.y))
+            if item.image is not None:
+                sprite = pygame.surfarray.make_surface(item.image)
+                self.subsurface.blit(sprite, item.rect.topleft)
+            else:
+                self.subsurface.fill(item.back_color, item.rect)
 
-            # self.surface.fill(item.color, item_rect)
-
-    def clear(self):
-        self.placeables = []
+        pygame.draw.rect(self.subsurface, self.border_color, (0, 0, self.rect.w, self.rect.h), self.border_width)
+        return self.subsurface
+        # self.subsurface.fill(self.fill_color)
+        # if self.camera_frame is not None:
+        #     self._draw_camera_frame()
+        # else:
+        #     self._draw_generated_boxes()
+        # pygame.draw.rect(self.subsurface, self.border_color, (0, 0, self.rect.w, self.rect.h), self.border_width)
+        # return self.subsurface

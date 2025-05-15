@@ -12,7 +12,7 @@ from app.custom_elements.ButtonsPanel import ButtonsPanel
 from app.custom_elements.DrawableRect import DrawableRect
 from app.custom_elements.StorageBox import StorageBox
 from app.custom_elements.Workspace import Workspace
-from app.packers.SimplePackerThread import SimplePackerThread
+from app.packers.NFDHPacker import NFDHPacker
 from app.screens.PhysScreen import PhysScreen
 from app.screens.base.ScreenBase import ScreenBase
 from camera.CameraController import CameraController, ActionState
@@ -24,6 +24,8 @@ class MainScreen(ScreenBase):
 
         self._init_ui_elements()
 
+        self.cam_fixed = False
+
         self.camera_controller: CameraController = self.context.camera_controller
         self.camera_controller.on_camera_connected.append(self._on_camera_connected)
 
@@ -34,7 +36,7 @@ class MainScreen(ScreenBase):
             relative_rect=pygame.Rect(0, 0, 0, 0),
             manager=self.context.ui_manager
         )
-        self.storage_box = StorageBox(pygame.Rect(0, 0, 0, 0))
+        self.storage_box = StorageBox(self.config.box_width, self.config.box_height)
         self.buttons_panel = ButtonsPanel(pygame.Rect(0, 0, 200, 0), self.context.ui_manager)
 
         self.update_layout(self.context.surface.size)
@@ -50,7 +52,7 @@ class MainScreen(ScreenBase):
         usable_width = screen_w - margin * 2 - panel_width - total_gap
 
         box_width = usable_width // 2
-        box_height = min(int(screen_h * 0.6), 400)
+
         workspace_height = box_width * self.workspace.camera_resolution_ratio
         new_workspace = pygame.Rect(margin, (screen_h - workspace_height) // 2, box_width, workspace_height)
         self.workspace.update_rect(new_workspace)
@@ -65,8 +67,10 @@ class MainScreen(ScreenBase):
         self.message_box.set_relative_position((message_x, message_y))
         self.message_box.set_dimensions((message_width, message_height))
 
-        new_storage = pygame.Rect(new_workspace.right + gap, (screen_h - box_height) // 2, box_width, box_height)
-        self.storage_box.rect.update(new_storage)
+        storage_height = box_width * self.storage_box.aspect_ratio
+        new_storage = pygame.Rect(new_workspace.right + gap, (screen_h - storage_height) // 2, box_width,
+                                  storage_height)
+        self.storage_box.update_rect(new_storage)
 
         new_buttons = pygame.Rect(new_storage.right + gap, 0, panel_width, screen_h)
         self.buttons_panel.rect.update(new_buttons)
@@ -93,9 +97,24 @@ class MainScreen(ScreenBase):
             "остановить обработку" if self.camera_controller.processing == ActionState.STARTED else
             "подождите.."
         )
+        fix_cam_button_message = "Отпустить" if self.cam_fixed else "Зафиксировать"
 
         self.buttons_panel.camera_button.set_text(cam_button_message)
         self.buttons_panel.process_button.set_text(process_button_message)
+        self.buttons_panel.fix_cam_button.set_text(fix_cam_button_message)
+
+        if self.camera_controller.capturing == ActionState.STARTED:
+            self.buttons_panel.process_button.enable()
+        else:
+            self.buttons_panel.process_button.disable()
+
+        if self.camera_controller.processing == ActionState.STARTED:
+            self.buttons_panel.fix_cam_button.enable()
+        else:
+            self.buttons_panel.fix_cam_button.disable()
+
+        if self.cam_fixed:
+            return
 
         self.workspace.camera_frame = self.camera_controller.get_frame()
 
@@ -105,12 +124,6 @@ class MainScreen(ScreenBase):
     def update_camera_process_result(self):
         boxes = self.camera_controller.get_boxes()
         self.workspace.boxes = boxes
-        boxes = [cv2.minAreaRect(box) for box in boxes]
-        self.workspace.detected_boxes = [
-            DrawableRect(pygame.Rect(x, y, w, h), angle,
-                         self.cut_rect(self.workspace.camera_frame, ((x, y), (w, h), angle)))
-            for ((x, y), (w, h), angle) in boxes]
-
         aruco_markers = self.camera_controller.get_markers()
         self.workspace.detected_markers = aruco_markers
 
@@ -149,6 +162,7 @@ class MainScreen(ScreenBase):
             self.place_phys()
 
         elif event.ui_element == self.buttons_panel.camera_button:
+            self.cam_fixed = False
             if self.camera_controller.capturing == ActionState.STOPPED:
                 self.camera_controller.start()
             elif self.camera_controller.capturing == ActionState.STARTED:
@@ -160,13 +174,35 @@ class MainScreen(ScreenBase):
             elif self.camera_controller.processing == ActionState.STARTED:
                 self.camera_controller.stop_processing()
 
+        elif event.ui_element == self.buttons_panel.fix_cam_button:
+            self.fix_cam()
+
+    def fix_cam(self):
+        self.cam_fixed = not self.cam_fixed
+        if not self.cam_fixed:
+            self.workspace.detected_boxes = []
+        else:
+            boxes = [cv2.minAreaRect(box) for box in self.workspace.boxes]
+            self.workspace.detected_boxes = [
+                DrawableRect(pygame.Rect(x, y, w, h), angle,
+                             self.cut_rect(self.workspace.camera_frame, ((x, y), (w, h), angle)))
+                for ((x, y), (w, h), angle) in boxes]
+
+            self.workspace.generated_boxes = []
+
     def place_to_box(self):
-        packer = SimplePackerThread(self)
-        packer.start()
+        packer = NFDHPacker(*self.storage_box.rect.size)
+        boxes_to_pack = self.workspace.detected_boxes if len(self.workspace.detected_boxes) > 0 \
+            else self.workspace.generated_boxes
+
+        packer.start(boxes_to_pack, self._on_packing_completed)
 
     def place_phys(self):
-        pass
-        # self.screen_manager.switch_to(PhysScreen(self.context, self))
+        self.screen_manager.switch_to(PhysScreen, self.config.box_width, self.config.box_height,
+                                      self.workspace.generated_boxes)
+
+    def _on_packing_completed(self, packed):
+        self.storage_box.placeables = packed
 
     def _on_camera_connected(self):
         resolution = self.camera_controller.get_camera_resolution()
