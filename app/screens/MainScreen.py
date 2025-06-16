@@ -1,5 +1,3 @@
-import random
-
 import cv2
 import numpy as np
 import pygame
@@ -12,10 +10,11 @@ from app.custom_elements.ButtonsPanel import ButtonsPanel
 from app.custom_elements.DrawableRect import DrawableRect
 from app.custom_elements.StorageBox import StorageBox
 from app.custom_elements.Workspace import Workspace
-from app.packers.NFDHPacker import NFDHPacker
 from app.screens.PhysScreen import PhysScreen
 from app.screens.base.ScreenBase import ScreenBase
-from camera.CameraController import CameraController, ActionState
+from app.CameraController import CameraController, ActionState
+from packing_lib.packing_lib.packers.NFDHPacker import NFDHPacker
+from packing_lib.packing_lib.types import PackingTask, Container, RectObject
 
 
 class MainScreen(ScreenBase):
@@ -67,12 +66,13 @@ class MainScreen(ScreenBase):
         self.message_box.set_relative_position((message_x, message_y))
         self.message_box.set_dimensions((message_width, message_height))
 
-        storage_height = box_width * self.storage_box.aspect_ratio
-        new_storage = pygame.Rect(new_workspace.right + gap, (screen_h - storage_height) // 2, box_width,
-                                  storage_height)
+        storage_width = self.config.box_width * 1000
+        storage_height = storage_width * self.storage_box.aspect_ratio
+        new_storage = pygame.Rect(new_workspace.right + gap, (screen_h - storage_height) // 2,
+                                  storage_width, storage_height)
         self.storage_box.update_rect(new_storage)
 
-        new_buttons = pygame.Rect(new_storage.right + gap, 0, panel_width, screen_h)
+        new_buttons = pygame.Rect(new_workspace.right + gap + box_width + gap, 0, panel_width, screen_h)
         self.buttons_panel.rect.update(new_buttons)
         self.buttons_panel.update_layout()
 
@@ -127,7 +127,8 @@ class MainScreen(ScreenBase):
         aruco_markers = self.camera_controller.get_markers()
         self.workspace.detected_markers = aruco_markers
 
-    def cut_rect(self, frame, rect):
+    @staticmethod
+    def cut_rect(frame, rect):
         center = rect[0]
         size = rect[1]
         angle = rect[2]
@@ -191,18 +192,24 @@ class MainScreen(ScreenBase):
             self.workspace.generated_boxes = []
 
     def place_to_box(self):
-        packer = NFDHPacker(*self.storage_box.rect.size)
+        packer = NFDHPacker()
         boxes_to_pack = self.workspace.detected_boxes if len(self.workspace.detected_boxes) > 0 \
             else self.workspace.generated_boxes
+        task = PackingTask(
+            Container(*self.storage_box.rect.size),
+            [RectObject(i, box.rect.w, box.rect.h) for i, box in enumerate(boxes_to_pack)])
 
-        packer.start(boxes_to_pack, self._on_packing_completed)
+        result = packer.pack(task)
+        self.storage_box.placeables = [DrawableRect(pygame.Rect(rect.x, rect.y, rect.width, rect.height)) for rect in
+                                       result]
+
 
     def place_phys(self):
         self.screen_manager.switch_to(PhysScreen, self.config.box_width, self.config.box_height,
                                       self.workspace.generated_boxes)
 
-    def _on_packing_completed(self, packed):
-        self.storage_box.placeables = packed
+    # def _on_packing_completed(self, packed):
+    #     self.storage_box.placeables = packed
 
     def _on_camera_connected(self):
         resolution = self.camera_controller.get_camera_resolution()

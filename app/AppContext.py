@@ -2,7 +2,7 @@ from pygame import Surface
 from pygame_gui import UIManager
 from app.AppConfig import AppConfig
 from app.screens.base.ScreenManager import ScreenManager
-from camera.CameraController import CameraController
+from app.CameraController import CameraController
 
 
 class AppContext:

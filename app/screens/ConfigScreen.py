@@ -52,10 +52,10 @@ class ConfigScreen(ScreenBase):
         self.stream_input = input_field(start_y + 25, self.config.stream_url)
 
         label("Ширина ящика (см)", start_y + spacing)
-        self.box_width_input = input_field(start_y + spacing + 25, self.config.box_width)
+        self.box_width_input = input_field(start_y + spacing + 25, str(self.config.box_width))
 
         label("Высота ящика (см)", start_y + spacing * 2)
-        self.box_height_input = input_field(start_y + spacing * 2 + 25, self.config.box_height)
+        self.box_height_input = input_field(start_y + spacing * 2 + 25, str(self.config.box_height))
 
         self.message_label = UITextBox(
             html_text="",

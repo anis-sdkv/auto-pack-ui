@@ -5,12 +5,10 @@ import cv2
 import numpy
 import numpy as np
 import pygame
-from pygame.display import update
-from pygame.examples.testsprite import update_rects
 
 from app.common import Colors
 from app.custom_elements.DrawableRect import DrawableRect
-from camera.detectors.ArucoDetector import ArucoResult
+from packing_lib.packing_lib.types import ArucoResult, RawObject, RectObject
 
 
 class Workspace:
@@ -22,8 +20,8 @@ class Workspace:
 
         self.generated_boxes: List[DrawableRect] = []
 
-        self.detected_boxes: List[DrawableRect] = []
-        self.boxes = []
+        self.boxes: List[RawObject] = []
+        self.converted_boxes: List[RectObject] = []
 
         self.detected_markers: List[ArucoResult] = []
 
@@ -90,7 +88,7 @@ class Workspace:
 
     def _draw_boxes(self):
         for rect in self.boxes:
-            points = (rect * self._camera_frame_scale_factor).astype(int).tolist()
+            points = (rect.bounding_box * self._camera_frame_scale_factor).astype(int).tolist()
             pygame.draw.polygon(self.subsurface, Colors.GREEN, points, 2)
 
     def _draw_generated_boxes(self):
@@ -98,5 +96,3 @@ class Workspace:
             pygame.draw.rect(self.subsurface, box.back_color, box.rect)
             # points = (rect * self._camera_frame_scale_factor).astype(int).tolist()
             # pygame.draw.polygon(self.subsurface, Colors.GREEN, points, 2)
-
-

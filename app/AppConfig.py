@@ -1,12 +1,27 @@
 import cv2
+import numpy as np
 
 
 class AppConfig:
-    DEFAULT_VIDEO_URL = 'http://192.168.137.43:4747/video'
-    ARUCO_DICT = cv2.aruco.DICT_ARUCO_ORIGINAL
-    ARUCO_MARKER_REAL_SIZE = 0.023
+    @staticmethod
+    def camera_matrix():
+        frame_shape = (640, 480)
+        fx = fy = 800.0
+        cx = frame_shape[0] / 2
+        cy = frame_shape[1] / 2
 
-    def __init__(self):
-        self.stream_url = AppConfig.DEFAULT_VIDEO_URL
-        self.box_width = 0.4
-        self.box_height = 0.6
+        return np.array([[fx, 0, cx],
+                         [0, fy, cy],
+                         [0, 0, 1]], dtype=np.float64)
+
+    @staticmethod
+    def dist_coeffs():
+        return np.zeros((5, 1), dtype=np.float64)
+
+    stream_url = 'http://192.168.137.60:4747/video'
+    box_width = 0.4
+    box_height = 0.4
+    aruco_marker_real_size = 0.023
+    aruco_dict = cv2.aruco.DICT_ARUCO_ORIGINAL
+    camera_matrix = camera_matrix()
+    dist_coeffs = dist_coeffs()
