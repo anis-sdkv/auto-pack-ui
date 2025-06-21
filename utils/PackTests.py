@@ -1,10 +1,10 @@
 import os
 import statistics
 
-from utils.PackingData import PackingData
-from utils.metrics.CenterOfMassShiftCalculator import CenterOfMassShiftCalculator
-from utils.metrics.PlacementDensityCalculator import PlacementDensityCalculator
-from utils.metrics.ShakeStabilityCalculator import ShakeStabilityCalculator
+from utils.PackingDataV2 import PackingDataV2
+from utils.metricsV2.CenterOfMassShiftCalculator import CenterOfMassShiftCalculator
+from utils.metricsV2.PlacementDensityCalculator import PlacementDensityCalculator
+from utils.metricsV2.ShakeStabilityCalculator import ShakeStabilityCalculator
 
 
 def print_results(dir):
@@ -14,7 +14,7 @@ def print_results(dir):
 
     for file in os.listdir(dir):
         fullpath = f"{dir}/{file}"
-        data = PackingData.load_from_file(fullpath)
+        data = PackingDataV2.load_from_file(fullpath)
 
         density = PlacementDensityCalculator(data)
         density_res.append(density.calculate_density())
@@ -46,6 +46,9 @@ def print_results(dir):
 if __name__ == "__main__":
     greedy_dir = "../out/bench/dataset_test/greedy"
     phys_dir = "../out/bench/dataset_test/phys"
+    exact = "../out/bench/dataset_test_multi/exactortools"
     print_results(greedy_dir)
     print("================= ")
     print_results(phys_dir)
+    print("================= ")
+    print_results(exact)

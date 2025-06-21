@@ -1,7 +1,7 @@
 import json
 import os
 
-from app.custom_elements.DrawableRect import DrawableRect
+# from app.custom_elements.DrawableRect import DrawableRect
 
 
 class PackingData:

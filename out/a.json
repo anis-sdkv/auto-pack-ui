@@ -3,17 +3,19 @@
 [
   {
     "object_id": 1,
-    "grasp_point_xy": [120.5, 300.0],
-    "grasp_angle_deg": 0,
-    "target_point_xy": [500.0, 600.0],
+    "grasp_point_xyz": [120.5, 300.0, 10],
+    "grasp_angle_deg_x": 46,
+    "grasp_width": 40,
+    "target_point_xy": [500.0, 600.0, 10],
     "target_angle_deg": 90
   },
   {
     "object_id": 2,
-    "grasp_point_xy": [200.0, 400.0],
-    "grasp_angle_deg": 0,
-    "target_point_xy": [600.0, 700.0],
-    "target_angle_deg": 0
+    "grasp_point_xyz": [120.5, 300.0, 10],
+    "grasp_angle_deg_x": 46,
+    "grasp_width": 40,
+    "target_point_xy": [500.0, 600.0, 10],
+    "target_angle_deg": 90
   }
 ]
 

@@ -3,9 +3,8 @@ import math
 import random
 import pygame
 
-from app.custom_elements.DrawableRect import DrawableRect
-from app.packers.NFDHPacker import NFDHPacker
 from packing_lib.packing_lib._phys_engine.PhysicsEngine import PhysicsEngine
+from packing_lib.packing_lib.packers.NFDHPacker import NFDHPacker
 from utils.PackingData import PackingData
 
 

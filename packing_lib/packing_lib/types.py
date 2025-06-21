@@ -11,6 +11,7 @@ class RectObject:
     angle_deg: float
     width: float
     height: float
+    z: float
 
 
 @dataclass
@@ -25,7 +26,6 @@ class Container:
 class PackingTask:
     container: Container
     objects: List[RectObject]
-
 
 @dataclass
 class PlacedObject:
@@ -53,5 +53,11 @@ class RawObject:
 @dataclass
 class SceneProcessResult:
     markers: List[ArucoResult]
-    raw_objects: List[RawObject]  # ((cx, cy), (w, h), angle)
+    raw_objects: List[RawObject]
     converted_objects: List[RectObject]
+
+# @dataclass
+# class PackInput:
+#     id: int
+#     width: float
+#     height: float

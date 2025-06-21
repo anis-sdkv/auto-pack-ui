@@ -70,7 +70,7 @@ def visualize_scene_process_result(frame: np.ndarray, result: SceneProcessResult
             label = (
                 f"id:{obj_id} "
                 f"C=({cx:.1f},{cy:.1f}) "
-                f"S={int(w)}x{int(h)} mm "
+                f"S={w:.2f}x{h:.2f} mm "
                 f"A={int(angle)}°"
             )
 
@@ -118,22 +118,22 @@ def visualize_objects(objects: List[PlacedObject], title: str = "Placed Objects"
     plt.show()
 
 
-frame = cv2.imread("in/det2.jpg")
+frame = cv2.imread("in/det7.jpg")
 aruco = ArucoBoxDetector(2.3, AppConfig.camera_matrix, AppConfig.dist_coeffs)
 yolo = YoloBoxDetector()
 processor = SceneProcessor(aruco, yolo)
 result = processor.process(frame)
 
 task = PackingTask(
-    Container((0, 50), 40, 30),
+    Container((0, 50), 19, 11),
     result.converted_objects
 )
 
-packer = PhysPacker()
+packer = NFDHPacker()
 placed_objects = packer.pack(task)
 
-visualize_objects(placed_objects)
 
+visualize_objects(placed_objects)
 visualized = visualize_scene_process_result(frame, result)
 cv2.imshow("Scene", visualized)
 cv2.waitKey(0)
