@@ -14,7 +14,7 @@ from app.screens.PhysScreen import PhysScreen
 from app.screens.base.ScreenBase import ScreenBase
 from app.CameraController import CameraController, ActionState
 from packing_lib.packing_lib.packers.NFDHPacker import NFDHPacker
-from packing_lib.packing_lib.types import PackingTask, Container, RectObject
+from packing_lib.packing_lib.types import PackingInputTask, PackingContainer, RectObject
 
 
 class MainScreen(ScreenBase):
@@ -195,12 +195,23 @@ class MainScreen(ScreenBase):
         packer = NFDHPacker()
         boxes_to_pack = self.workspace.detected_boxes if len(self.workspace.detected_boxes) > 0 \
             else self.workspace.generated_boxes
-        task = PackingTask(
-            Container(*self.storage_box.rect.size),
-            [RectObject(i, box.rect.w, box.rect.h) for i, box in enumerate(boxes_to_pack)])
+        rect_objects = [
+            RectObject(
+                id=i,
+                center_mm=(box.rect.w/2, box.rect.h/2),
+                angle_deg=0.0,
+                width=box.rect.w,
+                height=box.rect.h,
+                z=0.0
+            ) for i, box in enumerate(boxes_to_pack)
+        ]
+        task = PackingInputTask(
+            PackingContainer(*self.storage_box.rect.size),
+            PackingInputTask.from_rect_objects(rect_objects)
+        )
 
         result = packer.pack(task)
-        self.storage_box.placeables = [DrawableRect(pygame.Rect(rect.x, rect.y, rect.width, rect.height)) for rect in
+        self.storage_box.placeables = [DrawableRect(pygame.Rect(rect.left, rect.top, rect.width, rect.height)) for rect in
                                        result]
 
 

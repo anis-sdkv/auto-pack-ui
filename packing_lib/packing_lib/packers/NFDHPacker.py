@@ -1,10 +1,10 @@
 from typing import List
 from ..interfaces.BasePacker import BasePacker
-from ..types import PackingTask, PlacedObject
+from ..types import PackingInputTask, PlacedObject
 
 
 class NFDHPacker(BasePacker):
-    def pack(self, task: PackingTask) -> List[PlacedObject]:
+    def pack(self, task: PackingInputTask) -> List[PlacedObject]:
         objects = sorted(task.objects, key=lambda r: r.height, reverse=True)
 
         packed = []
@@ -24,10 +24,14 @@ class NFDHPacker(BasePacker):
             if y_cursor + obj.height > task.container.height:
                 continue
 
+            # Конвертируем левый верх в центр
+            center_x = x_cursor + obj.width / 2
+            center_y = y_cursor + obj.height / 2
+            
             packed.append(PlacedObject(
                 id=obj.id,
-                x=x_cursor,
-                y=y_cursor,
+                center_x=center_x,
+                center_y=center_y,
                 width=obj.width,
                 height=obj.height,
             ))

@@ -17,8 +17,8 @@ class PackingDataV2:
         for obj in placed_objects:
             self.objects.append({
                 'id': obj.id,
-                'x': obj.x,
-                'y': obj.y,
+                'x': obj.left,  # используем левую границу для JSON
+                'y': obj.top,   # используем верхнюю границу для JSON
                 'w': obj.width,
                 'h': obj.height
             })
@@ -26,8 +26,8 @@ class PackingDataV2:
     def add_object(self, obj: PlacedObject):
         self.objects.append({
             'id': obj.id,
-            'x': obj.x,
-            'y': obj.y,
+            'x': obj.left,  # используем левую границу для JSON
+            'y': obj.top,   # используем верхнюю границу для JSON
             'w': obj.width,
             'h': obj.height
         })

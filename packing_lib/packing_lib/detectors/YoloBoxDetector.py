@@ -70,7 +70,21 @@ class YoloBoxDetector:
 
         cnt = max(contours, key=cv2.contourArea)
         rect = cv2.minAreaRect(cnt)
-        return rect
+        
+        # Получаем параметры прямоугольника
+        (cx, cy), (w, h), angle = rect
+        
+        # Определяем угол по длинной стороне объекта
+        # cv2.minAreaRect может вернуть угол любой стороны, нам нужен угол длинной стороны
+        if w < h:
+            # Если ширина меньше высоты, то длинная сторона повернута на 90°
+            w, h = h, w  # Меняем местами размеры
+            angle += 90  # Корректируем угол
+        
+        # Нормализуем угол к диапазону [0, 180)
+        angle = angle % 180
+        
+        return ((cx, cy), (w, h), angle)
 
     @staticmethod
     def remove_inner_masks(masks, iou_thresh=0.9, min_area=100):

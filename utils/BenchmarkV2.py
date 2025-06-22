@@ -3,10 +3,9 @@ import os
 from typing import List
 
 from packing_lib.packing_lib.interfaces.BasePacker import BasePacker
-from packing_lib.packing_lib.packers.BranchAndBoundPacker import BranchAndBoundPacker
 from packing_lib.packing_lib.packers.ExactORToolsPacker import ExactORToolsPacker
 from packing_lib.packing_lib.packers.NFDHPacker import NFDHPacker
-from packing_lib.packing_lib.types import PackingTask, Container, RectObject, PlacedObject
+from packing_lib.packing_lib.types import PackingInputTask, PackingContainer, PackInput, PlacedObject
 from utils.PackingDataV2 import PackingDataV2
 
 
@@ -16,7 +15,7 @@ class BenchmarkV2:
         self.packers = packers
         self.container_width = 200
         self.container_height = 200
-        self.container = Container((0, 0), self.container_width, self.container_height)
+        self.container = PackingContainer(self.container_width, self.container_height)
 
     def start_bench(self, dataset_name: str, num_samples: int = 10, num_objects: int = 40):
         for packer in self.packers:
@@ -24,8 +23,8 @@ class BenchmarkV2:
             print(f"Benchmarking {packer_name}...")
 
             for i in range(num_samples):
-                objects = self.create_random_items(num_objects)
-                task = PackingTask(container=self.container, objects=objects)
+                rect_objects = self.create_random_items(num_objects)
+                task = PackingInputTask(self.container, PackingInputTask.from_rect_objects(rect_objects))
                 packed = packer.pack(task)
 
                 dir_path = os.path.join(self.base_path, f"dataset_{dataset_name}", packer_name)

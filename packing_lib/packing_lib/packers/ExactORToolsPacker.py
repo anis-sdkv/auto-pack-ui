@@ -4,7 +4,7 @@ from ortools.sat.python import cp_model
 import time
 
 from packing_lib.packing_lib.interfaces.BasePacker import BasePacker
-from packing_lib.packing_lib.types import PlacedObject, PackingTask, RectObject, Container
+from packing_lib.packing_lib.types import PlacedObject, PackingInputTask, PackInput, PackingContainer
 
 
 class ExactORToolsPacker(BasePacker):
@@ -25,7 +25,7 @@ class ExactORToolsPacker(BasePacker):
         self.allow_rotation = allow_rotation
         self.try_subsets = try_subsets
 
-    def pack(self, task: PackingTask) -> List[PlacedObject]:
+    def pack(self, task: PackingInputTask) -> List[PlacedObject]:
         """
         Выполняет точную упаковку прямоугольников
         """
@@ -53,7 +53,7 @@ class ExactORToolsPacker(BasePacker):
         print("Решение не найдено")
         return []
 
-    def _try_pack(self, task: PackingTask, objects: List[RectObject]) -> List[PlacedObject]:
+    def _try_pack(self, task: PackingInputTask, objects: List[PackInput]) -> List[PlacedObject]:
         """
         Пытается упаковать заданный список объектов
         """
@@ -89,7 +89,7 @@ class ExactORToolsPacker(BasePacker):
         else:
             return []
 
-    def _prepare_rectangles(self, objects: List[RectObject]) -> List[dict]:
+    def _prepare_rectangles(self, objects: List[PackInput]) -> List[dict]:
         """
         Подготавливает данные прямоугольников для решателя
         """
@@ -209,7 +209,7 @@ class ExactORToolsPacker(BasePacker):
         # Хотя бы одно из условий должно выполняться
         model.AddBoolOr([left, right, below, above])
 
-    def _extract_solution(self, solver, variables, rectangles, container: Container) -> List[PlacedObject]:
+    def _extract_solution(self, solver, variables, rectangles, container: PackingContainer) -> List[PlacedObject]:
         """
         Извлекает решение из решателя
         """
@@ -228,14 +228,16 @@ class ExactORToolsPacker(BasePacker):
                 width = rect['width']
                 height = rect['height']
 
-            # Корректируем координаты с учетом системы координат контейнера
-            final_x = container.left_top_point[0] + container.padding + x
-            final_y = container.left_top_point[1] + container.padding + y
+            # Конвертируем левый верх в центр (с учетом padding)
+            left_x = container.padding + x
+            top_y = container.padding + y
+            center_x = left_x + width / 2
+            center_y = top_y + height / 2
 
             placed_objects.append(PlacedObject(
                 id=rect['id'],
-                x=final_x,
-                y=final_y,
+                center_x=center_x,
+                center_y=center_y,
                 width=width,
                 height=height
             ))

@@ -1,30 +1,30 @@
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pymunk
 import random
 import math
 
-import pygame
-
-from app.common import Colors
 from packing_lib.packing_lib._phys_engine.BodyTracker import BodyTracker
 from packing_lib.packing_lib._phys_engine.EmptyAreaFinder import find_empty_areas
 from packing_lib.packing_lib._phys_engine.PhysicsConfig import PhysicsConfig
-from packing_lib.packing_lib.types import RectObject, Container
+from packing_lib.packing_lib._phys_engine.Renderer import Renderer, HeadlessRenderer
+from packing_lib.packing_lib.types import PackInput, PackingContainer
 
 
 class PhysicsEngine:
-    def __init__(self, box_rect: Container, config: PhysicsConfig = PhysicsConfig()):
+    def __init__(self, box_rect: PackingContainer, config: PhysicsConfig = PhysicsConfig(), renderer: Optional[Renderer] = None):
         self.config = config
         self.done = False
         self.speed_multiplier = self.config.simulation_speed_multiplier
-        self._subsurface = pygame.Surface((box_rect.width, box_rect.height))
+        
+        self._renderer = renderer or HeadlessRenderer()
+        self._renderer.initialize(box_rect)
 
         self._box_rect = box_rect
 
         self._rectangles = []
-        self._shake_timer = 4
+        self._shake_timer = self.config.shake_duration
 
         self._rotation_index = 0
         self._rotation_done = False
@@ -37,7 +37,7 @@ class PhysicsEngine:
         self._empty_filled = False
 
         self._stationary_counter = 0
-        self._shake_strength = 10
+        self._shake_strength = self.config.initial_shake_strength
 
         self._trackers = None
 
@@ -65,10 +65,10 @@ class PhysicsEngine:
         b = s.static_body
 
         points = [
-            (0, -10000),
+            (0, -self.config.boundary_depth),
             (0, container.height),
             (container.width, container.height),
-            (container.width, -10000),
+            (container.width, -self.config.boundary_depth),
         ]
 
         s.add(
@@ -77,28 +77,27 @@ class PhysicsEngine:
             pymunk.Segment(b, points[2], points[3], 0),
         )
 
-    def add_rects(self, rects: List[RectObject]):
+    def add_rects(self, rects: List[PackInput]):
         rects = sorted(rects, key=lambda x: x.width * x.height, reverse=True)
         y_counter = 0
         for rect in rects:
-            rects = rect
             x_pos = random.randint(0, int(self._box_rect.width - rect.width))
             y_pos = y_counter
-            y_counter -= rects.height - 10
+            y_counter -= rect.height - self.config.object_spacing
 
-            inertia = pymunk.moment_for_box(self.config.body_mass, (rects.width, rects.height))
+            inertia = pymunk.moment_for_box(self.config.body_mass, (rect.width, rect.height))
             body = pymunk.Body(self.config.body_mass, inertia)
-            body.position = (x_pos + rects.width / 2, y_pos + rects.height / 2)
+            body.position = (x_pos + rect.width / 2, y_pos + rect.height / 2)
 
-            shape = pymunk.Poly.create_box(body, (rects.width, rects.height))
+            shape = pymunk.Poly.create_box(body, (rect.width, rect.height))
             shape.friction = self.config.body_friction
             shape.elasticity = self.config.body_elasticity
             shape.source_object = rect
 
             self.space.add(body, shape)
-            self. _rectangles.append((rects, body, shape))
+            self._rectangles.append((rect, body, shape))
 
-        self._trackers = [BodyTracker(body) for body in self.space.bodies if body.body_type == pymunk.Body.DYNAMIC]
+        self._trackers = [BodyTracker(body, self.config.position_threshold, self.config.angle_threshold) for body in self.space.bodies if body.body_type == pymunk.Body.DYNAMIC]
 
     def get_colliding_pairs(self):
         colliding = []
@@ -110,18 +109,19 @@ class PhysicsEngine:
                     colliding.append((s1, s2))
         return colliding
 
+
     def update(self, dt):
         self._update_trackers()
 
-        if self._stationary_counter > 3:
+        if self._stationary_counter > self.config.stationary_threshold:
             if not self._rotation_done:
                 self._rotate_next_rectangle()
                 if self._rotation_index >= len(self._rectangles):
-                    self._shake_timer = 4
-                    self._shake_strength = 2
+                    self._shake_timer = self.config.shake_duration
+                    self._shake_strength = self.config.post_rotation_shake_strength
             elif self._shake_timer < 0 and not self._empty_filled:
                 self._fill_empty_areas()
-                self._shake_timer = 4
+                self._shake_timer = self.config.shake_duration
 
         for _ in range(self.speed_multiplier):
             if self._shake_timer > 0:
@@ -152,8 +152,8 @@ class PhysicsEngine:
 
         current_angle = body.angle % (2 * math.pi)
 
-        # Целевые углы: вертикальное положение (π/2 и 3π/2)
-        vertical_angles = [0, math.pi / 2, math.pi, 3 * math.pi / 2]
+        # Целевые углы из конфигурации
+        vertical_angles = self.config.rotation_angles_rad
 
         # Найти ближайший вертикальный угол
         closest_angle = min(vertical_angles, key=lambda a: abs(a - current_angle))
@@ -179,27 +179,61 @@ class PhysicsEngine:
             return poly_a.intersection(poly_b).area
         return 0
 
+    def _get_actual_dimensions(self, original_width, original_height, body_angle):
+        """
+        Вычисляет актуальные размеры объекта с учетом поворота.
+        
+        Args:
+            original_width: исходная ширина
+            original_height: исходная высота  
+            body_angle: угол поворота body в радианах
+            
+        Returns:
+            tuple: (актуальная_ширина, актуальная_высота)
+        """
+        # Нормализуем угол к диапазону [0, 2π]
+        angle = body_angle % (2 * math.pi)
+        
+        # Проверяем близость к 90° (π/2) с допуском
+        tolerance = math.pi / 4  # 45 градусов
+        
+        if math.pi / 2 - tolerance < angle < math.pi / 2 + tolerance:
+            # 90° - поворот на 90 градусов
+            return original_height, original_width
+        else:
+            # 0° или любой другой угол - исходные размеры
+            return original_width, original_height
+
     def _fill_empty_areas(self):
         self._empty_areas = find_empty_areas(self.get_parent_image())
 
-        rects_to_place = [
-            (rect, body, shape)
-            for rect, body, shape in self._rectangles
-            if body.position.y + rect.height / 2 < self._box_rect.y
-        ]
+        # Объекты, которые вылетели за пределы контейнера (контейнер всегда начинается с (0,0))
+        rects_to_place = []
+        for rect, body, shape in self._rectangles:
+            # Получаем актуальные размеры с учетом поворота
+            actual_width, actual_height = self._get_actual_dimensions(
+                rect.width, rect.height, body.angle
+            )
+            
+            # Проверяем границы с актуальными размерами
+            if (body.position.y - actual_height / 2 > self._box_rect.height or  # упали вниз
+                body.position.x - actual_width / 2 > self._box_rect.width or    # улетели вправо
+                body.position.x + actual_width / 2 < 0 or                      # улетели влево
+                body.position.y + actual_height / 2 < 0):                      # улетели вверх
+                rects_to_place.append((rect, body, shape))
 
         for empty_area in self._empty_areas:
             ex, ey, ew, eh = empty_area
             for i, (rect, body, shape) in enumerate(rects_to_place):
                 rw, rh = rect.width, rect.height
-                can_fit_normal = rw <= ew and rh <= eh
+                can_fit_normal = rw <= ew and rh <= eh  
                 can_fit_rotated = rh <= ew and rw <= eh
 
                 if can_fit_normal or can_fit_rotated:
                     if not can_fit_normal:
-                        body.angle = math.pi / 2  # 90 градусов
+                        body.angle = self.config.rotation_angles_rad[1]  # 90 градусов
                     else:
-                        body.angle = 0
+                        body.angle = self.config.rotation_angles_rad[0]  # 0 градусов
 
                     rw, rh = rect.width, rect.height
                     body.position = (ex + rw / 2, ey + rh / 2)
@@ -210,12 +244,14 @@ class PhysicsEngine:
 
         self._empty_filled = True
 
-    def _shake(self, strength=10000):
+    def _shake(self, strength=None):
+        if strength is None:
+            strength = self.config.default_shake_force
         for body in self.space.bodies:
             if body.body_type == pymunk.Body.DYNAMIC:
                 dx = random.uniform(-strength, strength)
                 dy = random.uniform(-strength, strength)
-                body.apply_impulse_at_local_point((dx, dy))
+                body.apply_impulse_at_local_point((dx, dy), (0, 0))
 
     def get_drawable_objects(self):
         return self._rectangles
@@ -224,28 +260,7 @@ class PhysicsEngine:
         return [s for s in self.space.shapes if isinstance(s, pymunk.Segment)]
 
     def get_parent_image(self):
-        surface = self._render()
-        surf_array = pygame.surfarray.array3d(surface)  # shape: (width, height, 3)
-        image_np = np.transpose(surf_array, (1, 0, 2))  # shape: (height, width, 3)
-
-        return image_np
+        return self._renderer.get_image_array()
 
     def _render(self):
-        self._subsurface.fill(Colors.WHITE)
-
-        for seg in self.get_segments():
-            start = int(seg.a.x), int(seg.a.y)
-            end = int(seg.b.x), int(seg.b.y)
-            pygame.draw.line(self._subsurface, (23, 22, 110), start, end, 3)
-
-        for rect, body, shape in self.get_drawable_objects():
-            surface = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
-            surface.fill(shape.source_object.back_color)
-            angle_degrees = -body.angle * 180 / math.pi
-            rotated = pygame.transform.rotate(surface, angle_degrees)
-            rotated_rect = rotated.get_rect(center=(int(body.position.x), int(body.position.y)))
-            self._subsurface.blit(rotated, rotated_rect)
-
-        pygame.draw.rect(self._subsurface, Colors.BLACK, (0, 0, self._box_rect.width, self._box_rect.height))
-
-        return self._subsurface
+        return self._renderer.render(self.get_drawable_objects(), self.get_segments())
