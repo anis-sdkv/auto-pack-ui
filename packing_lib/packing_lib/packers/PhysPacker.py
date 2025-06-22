@@ -5,60 +5,51 @@ from typing import List, Optional
 import pygame
 
 from packing_lib.packing_lib._phys_engine.PhysicsEngine import PhysicsEngine
-from packing_lib.packing_lib._phys_engine.Renderer import PygameRenderer, HeadlessRenderer
+from packing_lib.packing_lib._phys_engine.Renderer import PygameRenderer
 from packing_lib.packing_lib.interfaces.BasePacker import BasePacker
-from packing_lib.packing_lib.types import PackingInputTask, PlacedObject, PackingContainer, PackInput
+from packing_lib.packing_lib.types import PackingInputTask, PlacedObject, PackingContainer, PackInputObject
 
 
 class PhysPacker(BasePacker):
-    def __init__(self, headless=False, pixels_per_mm=10, simulation_speed=1.0, target_fps=60):
+    def __init__(self, headless=False, render_scale=1, simulation_speed=1.0, target_fps=60):
         """
         Args:
             headless: режим без визуализации (максимальная скорость)
-            pixels_per_mm: масштаб для визуализации
+            render_scale: масштаб для визуализации
             simulation_speed: множитель скорости симуляции (только для визуализации)
             target_fps: целевой FPS для визуализации
         """
         self.headless = headless
-        if pixels_per_mm <= 0:
+        if render_scale <= 0:
             raise ValueError("pixels_per_mm должен быть больше 0")
-        self.pixels_per_mm = pixels_per_mm
+        self.pixels_per_mm = render_scale
         self.simulation_speed = max(0.1, simulation_speed)  # минимум 0.1x
         self.target_fps = max(1, target_fps)  # минимум 1 FPS
 
 
     def pack(self, task: PackingInputTask) -> List[PlacedObject]:
-        # Масштабирование из мм в пиксели
-        scaled_container = PackingContainer(
-            width=task.container.width * self.pixels_per_mm,
-            height=task.container.height * self.pixels_per_mm,
-            padding=task.container.padding * self.pixels_per_mm
-        )
+        # Работаем с исходными размерами в мм
+        container = task.container
+        objects = task.objects
         
-        scaled_objects = [
-            PackInput(
-                id=obj.id,
-                width=obj.width * self.pixels_per_mm,
-                height=obj.height * self.pixels_per_mm
-            ) for obj in task.objects
-        ]
-        
-        bin_w, bin_h = int(scaled_container.width), int(scaled_container.height)
+        # Размер экрана для визуализации (если нужен)
+        bin_w = int(container.width * self.pixels_per_mm)
+        bin_h = int(container.height * self.pixels_per_mm)
         
         screen = None
         clock = None
+        renderer = None
         
         if not self.headless:
             pygame.init()
             screen = pygame.display.set_mode((bin_w, bin_h))
             pygame.display.set_caption("Physics Packing Visualization")
             clock = pygame.time.Clock()
-            renderer = PygameRenderer()
-        else:
-            renderer = HeadlessRenderer()
+            renderer = PygameRenderer(self.pixels_per_mm)
+            renderer.initialize(container)
 
-        engine = PhysicsEngine(scaled_container, renderer=renderer)
-        engine.add_rects(scaled_objects)
+        engine = PhysicsEngine(container)
+        engine.add_rects(objects)
 
         dt = 1 / 60  # базовый timestep для физики
 
@@ -82,11 +73,12 @@ class PhysPacker(BasePacker):
                         engine.update(dt)
 
                 # Отрисовка только финального состояния за кадр
-                surface = engine._render()
-                if surface:
-                    screen.blit(surface, (0, 0))
-                    pygame.display.flip()
-                    clock.tick(self.target_fps)
+                if renderer:
+                    surface = renderer.render(engine.get_drawable_objects(), engine.get_segments())
+                    if surface:
+                        screen.blit(surface, (0, 0))
+                        pygame.display.flip()
+                        clock.tick(self.target_fps)
 
 
         if not self.headless:
@@ -95,19 +87,14 @@ class PhysPacker(BasePacker):
         placed = []
         for rect, body, shape in engine.get_drawable_objects():
             # Вычисляем актуальные размеры с учетом поворота
-            original_width = rect.width / self.pixels_per_mm
-            original_height = rect.height / self.pixels_per_mm
             actual_width, actual_height = engine._get_actual_dimensions(
-                original_width, original_height, body.angle
+                rect.width, rect.height, body.angle
             )
-            
-            center_x = body.position.x / self.pixels_per_mm
-            center_y = body.position.y / self.pixels_per_mm
             
             placed.append(PlacedObject(
                 id=shape.source_object.id,
-                center_x=center_x,
-                center_y=center_y,
+                center_x=body.position.x,
+                center_y=body.position.y,
                 width=actual_width,
                 height=actual_height,
             ))

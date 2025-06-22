@@ -16,26 +16,26 @@ class PackingDataV2:
     def add_objects(self, placed_objects: List[PlacedObject]):
         for obj in placed_objects:
             self.objects.append({
-                'id': obj.id,
-                'x': obj.left,  # используем левую границу для JSON
-                'y': obj.top,   # используем верхнюю границу для JSON
-                'w': obj.width,
-                'h': obj.height
+                'id': int(obj.id),  # конвертируем в Python native int
+                'x': float(obj.left),  # конвертируем NumPy типы в Python native float
+                'y': float(obj.top),   
+                'w': float(obj.width),
+                'h': float(obj.height)
             })
 
     def add_object(self, obj: PlacedObject):
         self.objects.append({
-            'id': obj.id,
-            'x': obj.left,  # используем левую границу для JSON
-            'y': obj.top,   # используем верхнюю границу для JSON
-            'w': obj.width,
-            'h': obj.height
+            'id': int(obj.id),  # конвертируем в Python native int
+            'x': float(obj.left),  # конвертируем NumPy типы в Python native float
+            'y': float(obj.top),   
+            'w': float(obj.width),
+            'h': float(obj.height)
         })
 
     def save_to_file(self, path: str):
         data = {
-            'box_width': self.box_width,
-            'box_height': self.box_height,
+            'box_width': float(self.box_width),  # конвертируем NumPy типы в Python native
+            'box_height': float(self.box_height),
             'objects': self.objects
         }
         os.makedirs(os.path.dirname(path), exist_ok=True)

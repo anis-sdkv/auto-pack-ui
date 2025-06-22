@@ -32,8 +32,9 @@ class ManipulatorInstructionGenerator:
         self.default_drop_height = 0.0  # заглушка для z координаты
 
     def _round_value(self, value: float) -> float:
-        """Округляет значение до заданной точности"""
-        return round(value, self.precision)
+        """Округляет значение до заданной точности и конвертирует NumPy типы в Python native"""
+        # Конвертируем NumPy типы в Python native float для JSON сериализации
+        return round(float(value), self.precision)
 
     def _apply_manipulator_offset(self, x: float, y: float) -> Tuple[float, float]:
         """
@@ -104,13 +105,14 @@ class ManipulatorInstructionGenerator:
             output_x, output_y = self._apply_manipulator_offset(output_x, output_y)
 
             # Формируем выходную инструкцию (параметры размещения)
+            # Размеры остаются такими же, как в input - изменяется только угол
             output_instr = OutputInstruction(
                 x=self._round_value(output_x),
                 y=self._round_value(output_y),
                 z=self._round_value(self.default_drop_height),
                 theta=self._round_value(rotation_angle),
-                w=self._round_value(rotated_w),
-                h=self._round_value(rotated_h)
+                w=self._round_value(detected.width),
+                h=self._round_value(detected.height)
             )
 
             instructions.append(ManipulatorInstruction(

@@ -5,14 +5,14 @@ from typing import Tuple
 
 @dataclass
 class PhysicsConfig:
-    space_gravity: Tuple[float, float] = (0, 1000)
-    space_damping: float = 0.9
+    space_gravity: Tuple[float, float] = (0, 500)
+    space_damping: float = 0.5
     space_iterations: int = 50
     space_collision_slop: float = 0.01
 
-    body_mass: float = 0.1
-    body_friction: float = 0.5
-    body_elasticity: float = 0
+    body_mass: float = 0.5
+    body_friction: float = 0.2
+    body_elasticity: float = 0.2
 
     stationary_frames: int = 3
     shake_strength: float = 10

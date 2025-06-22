@@ -5,7 +5,7 @@ from typing import List
 from packing_lib.packing_lib.interfaces.BasePacker import BasePacker
 from packing_lib.packing_lib.packers.ExactORToolsPacker import ExactORToolsPacker
 from packing_lib.packing_lib.packers.NFDHPacker import NFDHPacker
-from packing_lib.packing_lib.types import PackingInputTask, PackingContainer, PackInput, PlacedObject
+from packing_lib.packing_lib.types import PackingInputTask, PackingContainer, PackInputObject, PlacedObject
 from utils.PackingDataV2 import PackingDataV2
 
 

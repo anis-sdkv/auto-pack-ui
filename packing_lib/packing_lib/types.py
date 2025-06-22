@@ -38,27 +38,7 @@ class PlacedObject:
     def top(self) -> float:
         """Координата верхней границы объекта"""
         return self.center_y - self.height / 2
-    
-    @property
-    def right(self) -> float:
-        """Координата правой границы объекта"""
-        return self.center_x + self.width / 2
-    
-    @property
-    def bottom(self) -> float:
-        """Координата нижней границы объекта"""
-        return self.center_y + self.height / 2
-    
-    # Для обратной совместимости (deprecated)
-    @property
-    def x(self) -> float:
-        """Deprecated: используйте left"""
-        return self.left
-    
-    @property
-    def y(self) -> float:
-        """Deprecated: используйте top"""
-        return self.top
+
 
 
 @dataclass
@@ -85,7 +65,7 @@ class SceneProcessResult:
 
 
 @dataclass
-class PackInput:
+class PackInputObject:
     id: int
     width: float
     height: float
@@ -94,12 +74,12 @@ class PackInput:
 @dataclass
 class PackingInputTask:
     container: PackingContainer
-    objects: List[PackInput]
+    objects: List[PackInputObject]
 
     @staticmethod
-    def from_rect_objects(rect_objects: List[RectObject]) -> List[PackInput]:
+    def from_rect_objects(rect_objects: List[RectObject]) -> List[PackInputObject]:
         return [
-            PackInput(id=obj.id, width=obj.width, height=obj.height)
+            PackInputObject(id=obj.id, width=obj.width, height=obj.height)
             for obj in rect_objects
         ]
 

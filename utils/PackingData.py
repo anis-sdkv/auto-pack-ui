@@ -33,9 +33,9 @@ class PackingData:
 
     def save_to_file(self, path):
         data = {
-            'box_width': self.box_width,
-            'box_height': self.box_height,
-            'objects': self.objects
+            'box_width': float(self.box_width),
+            'box_height': float(self.box_height),
+            'objects': [[float(x), float(y), float(w), float(h)] for x, y, w, h in self.objects]
         }
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w') as f:

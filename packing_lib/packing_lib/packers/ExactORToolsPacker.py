@@ -4,7 +4,7 @@ from ortools.sat.python import cp_model
 import time
 
 from packing_lib.packing_lib.interfaces.BasePacker import BasePacker
-from packing_lib.packing_lib.types import PlacedObject, PackingInputTask, PackInput, PackingContainer
+from packing_lib.packing_lib.types import PlacedObject, PackingInputTask, PackInputObject, PackingContainer
 
 
 class ExactORToolsPacker(BasePacker):
@@ -53,7 +53,7 @@ class ExactORToolsPacker(BasePacker):
         print("Решение не найдено")
         return []
 
-    def _try_pack(self, task: PackingInputTask, objects: List[PackInput]) -> List[PlacedObject]:
+    def _try_pack(self, task: PackingInputTask, objects: List[PackInputObject]) -> List[PlacedObject]:
         """
         Пытается упаковать заданный список объектов
         """
@@ -89,7 +89,7 @@ class ExactORToolsPacker(BasePacker):
         else:
             return []
 
-    def _prepare_rectangles(self, objects: List[PackInput]) -> List[dict]:
+    def _prepare_rectangles(self, objects: List[PackInputObject]) -> List[dict]:
         """
         Подготавливает данные прямоугольников для решателя
         """
@@ -223,7 +223,6 @@ class ExactORToolsPacker(BasePacker):
             if rect['rotatable']:
                 width = solver.Value(variables[f'actual_width_{i}'])
                 height = solver.Value(variables[f'actual_height_{i}'])
-                is_rotated = solver.BooleanValue(variables[f'rotated_{i}'])
             else:
                 width = rect['width']
                 height = rect['height']

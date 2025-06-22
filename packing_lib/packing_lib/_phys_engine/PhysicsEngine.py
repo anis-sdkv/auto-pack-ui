@@ -8,19 +8,14 @@ import math
 from packing_lib.packing_lib._phys_engine.BodyTracker import BodyTracker
 from packing_lib.packing_lib._phys_engine.EmptyAreaFinder import find_empty_areas
 from packing_lib.packing_lib._phys_engine.PhysicsConfig import PhysicsConfig
-from packing_lib.packing_lib._phys_engine.Renderer import Renderer, HeadlessRenderer
-from packing_lib.packing_lib.types import PackInput, PackingContainer
+from packing_lib.packing_lib.types import PackInputObject, PackingContainer
 
 
 class PhysicsEngine:
-    def __init__(self, box_rect: PackingContainer, config: PhysicsConfig = PhysicsConfig(),
-                 renderer: Optional[Renderer] = None):
+    def __init__(self, box_rect: PackingContainer, config: PhysicsConfig = PhysicsConfig()):
         self.config = config
         self.done = False
         self.speed_multiplier = self.config.simulation_speed_multiplier
-
-        self._renderer = renderer or HeadlessRenderer()
-        self._renderer.initialize(box_rect)
 
         self._box_rect = box_rect
 
@@ -78,7 +73,7 @@ class PhysicsEngine:
             pymunk.Segment(b, points[2], points[3], 0),
         )
 
-    def add_rects(self, rects: List[PackInput]):
+    def add_rects(self, rects: List[PackInputObject]):
         rects = sorted(rects, key=lambda x: x.width * x.height, reverse=True)
         y_counter = 0
         for rect in rects:
@@ -267,7 +262,86 @@ class PhysicsEngine:
         return [s for s in self.space.shapes if isinstance(s, pymunk.Segment)]
 
     def get_image_array(self):
-        return self._renderer.get_image_array()
+        """Создает numpy массив с текущим состоянием объектов для анализа пустых областей"""
+        width = int(self._box_rect.width )
+        height = int(self._box_rect.height )
 
-    def _render(self):
-        return self._renderer.render(self.get_drawable_objects(), self.get_segments())
+        # Создаем белый фон
+        image_array = np.full((height, width, 3), 255, dtype=np.uint8)
+
+        # Рисуем границы контейнера (черные линии)
+        image_array[0, :] = 0  # верхняя граница
+        image_array[-1, :] = 0  # нижняя граница
+        image_array[:, 0] = 0  # левая граница
+        image_array[:, -1] = 0  # правая граница
+
+        # Рисуем все объекты
+        for rect, body, shape in self._rectangles:
+            if body.body_type == pymunk.Body.STATIC:
+                continue
+            self._draw_rectangle_to_array(image_array, rect, body)
+
+        return image_array
+
+    def _draw_rectangle_to_array(self, image_array, rect, body):
+        """Рисует прямоугольник в numpy массиве с учетом поворота"""
+        # Получаем размеры и позицию с масштабированием
+        width = rect.width
+        height = rect.height
+        center_x = body.position.x
+        center_y = body.position.y
+        angle = body.angle
+
+        # Вычисляем углы прямоугольника с учетом поворота
+        cos_a, sin_a = math.cos(angle), math.sin(angle)
+        hw, hh = width / 2, height / 2
+
+        # Углы прямоугольника относительно центра
+        corners = [
+            (-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)
+        ]
+
+        # Поворачиваем углы и переводим в абсолютные координаты
+        rotated_corners = []
+        for x, y in corners:
+            rx = x * cos_a - y * sin_a + center_x
+            ry = x * sin_a + y * cos_a + center_y
+            rotated_corners.append((int(rx), int(ry)))
+
+        # Заполняем область прямоугольника
+        self._fill_polygon_in_array(image_array, rotated_corners)
+
+    def _fill_polygon_in_array(self, image_array, corners):
+        """Заполняет многоугольник в numpy массиве"""
+        if len(corners) < 3:
+            return
+
+        # Находим границы (используем размеры массива)
+        height, width = image_array.shape[:2]
+        min_y = max(0, min(y for x, y in corners))
+        max_y = min(height - 1, max(y for x, y in corners))
+
+        # Для каждой строки находим пересечения с гранями многоугольника
+        for y in range(min_y, max_y + 1):
+            intersections = []
+
+            # Проверяем пересечения с каждой гранью
+            for i in range(len(corners)):
+                x1, y1 = corners[i]
+                x2, y2 = corners[(i + 1) % len(corners)]
+
+                if y1 != y2:  # Исключаем горизонтальные линии
+                    if min(y1, y2) <= y <= max(y1, y2):
+                        # Вычисляем x-координату пересечения
+                        x = x1 + (x2 - x1) * (y - y1) / (y2 - y1)
+                        intersections.append(int(x))
+
+            # Сортируем пересечения и заполняем отрезки
+            intersections.sort()
+            for i in range(0, len(intersections), 2):
+                if i + 1 < len(intersections):
+                    x_start = max(0, intersections[i])
+                    x_end = min(width - 1, intersections[i + 1])
+                    if x_start <= x_end:
+                        image_array[y, x_start:x_end + 1] = 0  # Черный цвет
+
