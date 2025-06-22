@@ -16,7 +16,7 @@ class PhysicsConfig:
 
     stationary_frames: int = 3
     shake_strength: float = 10
-    rotation_angles_deg: Tuple[int, ...] = (0, 90)
+    rotation_angles_deg: Tuple[int, ...] = (0, 90, 180, 270)
     simulation_speed_multiplier = 1
     
     # Временные параметры
@@ -34,7 +34,7 @@ class PhysicsConfig:
     angle_threshold: float = 0.03
     
     # Встряхивание
-    default_shake_force: float = 10000.0
+    default_shake_force: float = 30000.0
 
     @property
     def rotation_angles_rad(self):

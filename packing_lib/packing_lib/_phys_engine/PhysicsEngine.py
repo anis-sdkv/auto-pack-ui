@@ -13,11 +13,12 @@ from packing_lib.packing_lib.types import PackInput, PackingContainer
 
 
 class PhysicsEngine:
-    def __init__(self, box_rect: PackingContainer, config: PhysicsConfig = PhysicsConfig(), renderer: Optional[Renderer] = None):
+    def __init__(self, box_rect: PackingContainer, config: PhysicsConfig = PhysicsConfig(),
+                 renderer: Optional[Renderer] = None):
         self.config = config
         self.done = False
         self.speed_multiplier = self.config.simulation_speed_multiplier
-        
+
         self._renderer = renderer or HeadlessRenderer()
         self._renderer.initialize(box_rect)
 
@@ -97,7 +98,8 @@ class PhysicsEngine:
             self.space.add(body, shape)
             self._rectangles.append((rect, body, shape))
 
-        self._trackers = [BodyTracker(body, self.config.position_threshold, self.config.angle_threshold) for body in self.space.bodies if body.body_type == pymunk.Body.DYNAMIC]
+        self._trackers = [BodyTracker(body, self.config.position_threshold, self.config.angle_threshold) for body in
+                          self.space.bodies if body.body_type == pymunk.Body.DYNAMIC]
 
     def get_colliding_pairs(self):
         colliding = []
@@ -109,6 +111,64 @@ class PhysicsEngine:
                     colliding.append((s1, s2))
         return colliding
 
+    def _collect_objects_for_placement(self):
+        """
+        Собирает объекты, которые нужно разместить в пустых областях,
+        и физически удаляет их из space и списка drawables
+        """
+        objects_to_place = []
+        objects_to_remove_indices = []
+
+        for i, (rect, body, shape) in enumerate(self._rectangles):
+            if body.body_type == pymunk.Body.STATIC:
+                continue
+
+            # Получаем актуальные размеры объекта с учетом поворота
+            actual_width, actual_height = self._get_actual_dimensions(
+                rect.width, rect.height, body.angle
+            )
+
+            # Проверяем объекты за верхней границей и другими границами
+            if (body.position.y - actual_height / 2 < 0 or  # улетели вверх
+                    body.position.y - rect.height / 2 > self._box_rect.height or  # упали вниз
+                    body.position.x - rect.width / 2 > self._box_rect.width or  # улетели вправо
+                    body.position.x + rect.width / 2 < 0):  # улетели влево
+                objects_to_place.append((rect, body, shape))
+                objects_to_remove_indices.append(i)
+                # Физически удаляем из space чтобы освободить место
+                self.space.remove(body, shape)
+
+        # Удаляем из списка drawables (в обратном порядке индексов)
+        for i in reversed(objects_to_remove_indices):
+            del self._rectangles[i]
+
+        return objects_to_place
+
+    def _fill_empty_areas(self, rects_to_place):
+        self._empty_areas = find_empty_areas(self.get_image_array())
+        for empty_area in self._empty_areas:
+            ex, ey, ew, eh = empty_area
+            for i, (rect, body, shape) in enumerate(rects_to_place):
+                rw, rh = rect.width, rect.height
+                can_fit_normal = rw <= ew and rh <= eh
+                can_fit_rotated = rh <= ew and rw <= eh
+
+                if can_fit_normal or can_fit_rotated:
+                    if not can_fit_normal:
+                        body.angle = self.config.rotation_angles_rad[1]  # 90 градусов
+                    else:
+                        body.angle = self.config.rotation_angles_rad[0]  # 0 градусов
+
+                    rw, rh = rect.width, rect.height
+                    body.position = (ex + rw / 2, ey + rh / 2)
+                    body.velocity = (0, 0)
+
+                    self.space.add(body, shape)
+                    self._rectangles.append((rect, body, shape))
+                    del rects_to_place[i]
+                    break
+
+        self._empty_filled = True
 
     def update(self, dt):
         self._update_trackers()
@@ -120,7 +180,8 @@ class PhysicsEngine:
                     self._shake_timer = self.config.shake_duration
                     self._shake_strength = self.config.post_rotation_shake_strength
             elif self._shake_timer < 0 and not self._empty_filled:
-                self._fill_empty_areas()
+                objects_to_place = self._collect_objects_for_placement()
+                self._fill_empty_areas(objects_to_place)
                 self._shake_timer = self.config.shake_duration
 
         for _ in range(self.speed_multiplier):
@@ -164,21 +225,6 @@ class PhysicsEngine:
         self.space.reindex_shapes_for_body(body)
         self._rotation_index += 1
 
-    def _calculate_overlap_area(self, shape_a, shape_b):
-        # Реализовать расчет площади пересечения shape_a и shape_b
-        # Вариант: использовать библиотеку shapely, если полигоны можно представить
-        from shapely.geometry import Polygon
-
-        def to_polygon(shape):
-            return Polygon([shape.body.local_to_world(v) for v in shape.get_vertices()])
-
-        poly_a = to_polygon(shape_a)
-        poly_b = to_polygon(shape_b)
-
-        if poly_a.intersects(poly_b):
-            return poly_a.intersection(poly_b).area
-        return 0
-
     def _get_actual_dimensions(self, original_width, original_height, body_angle):
         """
         Вычисляет актуальные размеры объекта с учетом поворота.
@@ -193,56 +239,17 @@ class PhysicsEngine:
         """
         # Нормализуем угол к диапазону [0, 2π]
         angle = body_angle % (2 * math.pi)
-        
-        # Проверяем близость к 90° (π/2) с допуском
+
+        # Проверяем близость к вертикальным углам (90° и 270°) с допуском
         tolerance = math.pi / 4  # 45 градусов
-        
-        if math.pi / 2 - tolerance < angle < math.pi / 2 + tolerance:
-            # 90° - поворот на 90 градусов
+
+        # 90° (π/2) или 270° (3π/2) - вертикальная ориентация
+        if (math.pi / 2 - tolerance < angle < math.pi / 2 + tolerance or
+                3 * math.pi / 2 - tolerance < angle < 3 * math.pi / 2 + tolerance):
             return original_height, original_width
         else:
-            # 0° или любой другой угол - исходные размеры
+            # 0° или 180° - горизонтальная ориентация
             return original_width, original_height
-
-    def _fill_empty_areas(self):
-        self._empty_areas = find_empty_areas(self.get_parent_image())
-
-        # Объекты, которые вылетели за пределы контейнера (контейнер всегда начинается с (0,0))
-        rects_to_place = []
-        for rect, body, shape in self._rectangles:
-            # Получаем актуальные размеры с учетом поворота
-            actual_width, actual_height = self._get_actual_dimensions(
-                rect.width, rect.height, body.angle
-            )
-            
-            # Проверяем границы с актуальными размерами
-            if (body.position.y - actual_height / 2 > self._box_rect.height or  # упали вниз
-                body.position.x - actual_width / 2 > self._box_rect.width or    # улетели вправо
-                body.position.x + actual_width / 2 < 0 or                      # улетели влево
-                body.position.y + actual_height / 2 < 0):                      # улетели вверх
-                rects_to_place.append((rect, body, shape))
-
-        for empty_area in self._empty_areas:
-            ex, ey, ew, eh = empty_area
-            for i, (rect, body, shape) in enumerate(rects_to_place):
-                rw, rh = rect.width, rect.height
-                can_fit_normal = rw <= ew and rh <= eh  
-                can_fit_rotated = rh <= ew and rw <= eh
-
-                if can_fit_normal or can_fit_rotated:
-                    if not can_fit_normal:
-                        body.angle = self.config.rotation_angles_rad[1]  # 90 градусов
-                    else:
-                        body.angle = self.config.rotation_angles_rad[0]  # 0 градусов
-
-                    rw, rh = rect.width, rect.height
-                    body.position = (ex + rw / 2, ey + rh / 2)
-                    body.velocity = (0, 0)
-                    self.space.reindex_shapes_for_body(body)
-                    del rects_to_place[i]
-                    break
-
-        self._empty_filled = True
 
     def _shake(self, strength=None):
         if strength is None:
@@ -259,7 +266,7 @@ class PhysicsEngine:
     def get_segments(self):
         return [s for s in self.space.shapes if isinstance(s, pymunk.Segment)]
 
-    def get_parent_image(self):
+    def get_image_array(self):
         return self._renderer.get_image_array()
 
     def _render(self):

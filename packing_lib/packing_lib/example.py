@@ -32,7 +32,7 @@ if __name__ == "__main__":
     output_dir = "../../out/"
 
     # Генерируем случайный набор данных для тестирования
-    random_objects = generate_random_objects(count=50, min_size=1, max_size=4)
+    random_objects = generate_random_objects(count=80, min_size=1, max_size=4)
 
     # Используем случайные данные
     task = PackingInputTask(container, random_objects)

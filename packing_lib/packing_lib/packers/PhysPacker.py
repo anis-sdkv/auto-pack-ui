@@ -26,30 +26,6 @@ class PhysPacker(BasePacker):
         self.simulation_speed = max(0.1, simulation_speed)  # минимум 0.1x
         self.target_fps = max(1, target_fps)  # минимум 1 FPS
 
-    def _get_actual_dimensions(self, original_width, original_height, body_angle):
-        """
-        Вычисляет актуальные размеры объекта с учетом поворота.
-        
-        Args:
-            original_width: исходная ширина
-            original_height: исходная высота  
-            body_angle: угол поворота body в радианах
-            
-        Returns:
-            tuple: (актуальная_ширина, актуальная_высота)
-        """
-        # Нормализуем угол к диапазону [0, 2π]
-        angle = body_angle % (2 * math.pi)
-        
-        # Проверяем близость к 90° (π/2) с допуском
-        tolerance = math.pi / 4  # 45 градусов
-        
-        if math.pi / 2 - tolerance < angle < math.pi / 2 + tolerance:
-            # 90° - поворот на 90 градусов
-            return original_height, original_width
-        else:
-            # 0° или любой другой угол - исходные размеры
-            return original_width, original_height
 
     def pack(self, task: PackingInputTask) -> List[PlacedObject]:
         # Масштабирование из мм в пиксели
@@ -121,28 +97,19 @@ class PhysPacker(BasePacker):
             # Вычисляем актуальные размеры с учетом поворота
             original_width = rect.width / self.pixels_per_mm
             original_height = rect.height / self.pixels_per_mm
-            actual_width, actual_height = self._get_actual_dimensions(
+            actual_width, actual_height = engine._get_actual_dimensions(
                 original_width, original_height, body.angle
             )
             
-            # Проверяем, что объект находится внутри контейнера
-            container_width = task.container.width
-            container_height = task.container.height
             center_x = body.position.x / self.pixels_per_mm
             center_y = body.position.y / self.pixels_per_mm
             
-            # Объект считается внутри контейнера, если его границы не выходят за пределы
-            if (center_x - actual_width / 2 >= 0 and
-                center_x + actual_width / 2 <= container_width and
-                center_y - actual_height / 2 >= 0 and
-                center_y + actual_height / 2 <= container_height):
-                
-                placed.append(PlacedObject(
-                    id=shape.source_object.id,
-                    center_x=center_x,
-                    center_y=center_y,
-                    width=actual_width,
-                    height=actual_height,
-                ))
+            placed.append(PlacedObject(
+                id=shape.source_object.id,
+                center_x=center_x,
+                center_y=center_y,
+                width=actual_width,
+                height=actual_height,
+            ))
 
         return placed
