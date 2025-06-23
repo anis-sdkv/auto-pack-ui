@@ -8,12 +8,13 @@ import math
 from packing_lib.packing_lib._phys_engine.BodyTracker import BodyTracker
 from packing_lib.packing_lib._phys_engine.EmptyAreaFinder import find_empty_areas
 from packing_lib.packing_lib._phys_engine.PhysicsConfig import PhysicsConfig
-from packing_lib.packing_lib.types import PackInputObject, PackingContainer
+from packing_lib.packing_lib.types import PackInputObject, PackingContainer, SortOrder
 
 
 class PhysicsEngine:
-    def __init__(self, box_rect: PackingContainer, config: PhysicsConfig = PhysicsConfig()):
+    def __init__(self, box_rect: PackingContainer, config: PhysicsConfig = PhysicsConfig(), sort_order: SortOrder = SortOrder.DESCENDING):
         self.config = config
+        self.sort_order = sort_order
         self.done = False
         self.speed_multiplier = self.config.simulation_speed_multiplier
 
@@ -74,7 +75,14 @@ class PhysicsEngine:
         )
 
     def add_rects(self, rects: List[PackInputObject]):
-        rects = sorted(rects, key=lambda x: x.width * x.height, reverse=True)
+        # Сортируем объекты в зависимости от выбранного порядка
+        if self.sort_order == SortOrder.DESCENDING:
+            rects = sorted(rects, key=lambda x: x.width * x.height, reverse=True)
+        elif self.sort_order == SortOrder.ASCENDING:
+            rects = sorted(rects, key=lambda x: x.width * x.height, reverse=False)
+        elif self.sort_order == SortOrder.RANDOM:
+            rects = rects.copy()  # копируем чтобы не изменять исходный список
+            random.shuffle(rects)
         y_counter = 0
         for rect in rects:
             x_pos = random.randint(0, int(self._box_rect.width - rect.width))

@@ -8,7 +8,7 @@ import pygame
 
 from app.common import Colors
 from app.custom_elements.DrawableRect import DrawableRect
-from packing_lib.packing_lib.types import ArucoResult, RawObject, RectObject
+from packing_lib.packing_lib.types import ArucoResult, RawObject, PackInputObject
 
 
 class Workspace:
@@ -19,9 +19,10 @@ class Workspace:
         self.border_width = 2
 
         self.generated_boxes: List[DrawableRect] = []
+        self.detected_boxes: List[DrawableRect] = []
 
         self.boxes: List[RawObject] = []
-        self.converted_boxes: List[RectObject] = []
+        self.converted_boxes: List[PackInputObject] = []
 
         self.detected_markers: List[ArucoResult] = []
 

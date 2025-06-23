@@ -1,7 +1,15 @@
 from dataclasses import dataclass
 from typing import Tuple, List, Optional
+from enum import Enum
 
 import numpy as np
+
+
+class SortOrder(Enum):
+    """Порядок сортировки объектов при сбросе в физическую симуляцию"""
+    DESCENDING = "descending"  # по убыванию (крупные вниз) - дефолт
+    ASCENDING = "ascending"    # по возрастанию (мелкие вниз)
+    RANDOM = "random"          # случайный порядок
 
 
 @dataclass

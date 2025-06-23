@@ -10,7 +10,7 @@ from app.AppConfig import AppConfig
 from packing_lib.packing_lib.SceneProcessor import SceneProcessor
 from packing_lib.packing_lib.detectors.ArucoDetector import ArucoBoxDetector, ArucoResult
 from packing_lib.packing_lib.detectors.YoloBoxDetector import YoloBoxDetector
-from packing_lib.packing_lib.types import RectObject
+from packing_lib.packing_lib.types import PackInputObject
 
 
 class ActionState(Enum):
@@ -39,7 +39,7 @@ class CameraController:
         self.latest_frame: numpy.ndarray | None = None
         self.detected_boxes = []
         self.detected_markers: list[ArucoResult] = []
-        self.converted_boxes: list[RectObject] = []
+        self.converted_boxes: list[PackInputObject] = []
 
         self.capture_thread = None
         self.processing_thread = None

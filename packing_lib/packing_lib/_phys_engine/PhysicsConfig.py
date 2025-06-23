@@ -34,7 +34,7 @@ class PhysicsConfig:
     angle_threshold: float = 0.03
     
     # Встряхивание
-    default_shake_force: float = 30000.0
+    default_shake_force: float = 300000.0
 
     @property
     def rotation_angles_rad(self):

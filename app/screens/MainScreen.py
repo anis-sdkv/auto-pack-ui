@@ -7,14 +7,13 @@ from pygame_gui import elements
 from app.AppContext import AppContext
 from app.common import Colors
 from app.custom_elements.ButtonsPanel import ButtonsPanel
-from app.custom_elements.DrawableRect import DrawableRect
 from app.custom_elements.StorageBox import StorageBox
 from app.custom_elements.Workspace import Workspace
 from app.screens.PhysScreen import PhysScreen
 from app.screens.base.ScreenBase import ScreenBase
 from app.CameraController import CameraController, ActionState
 from packing_lib.packing_lib.packers.NFDHPacker import NFDHPacker
-from packing_lib.packing_lib.types import PackingInputTask, PackingContainer, RectObject
+from packing_lib.packing_lib.types import PackingInputTask, PackingContainer, PackInputObject, PlacedObject
 
 
 class MainScreen(ScreenBase):
@@ -195,23 +194,20 @@ class MainScreen(ScreenBase):
         packer = NFDHPacker()
         boxes_to_pack = self.workspace.detected_boxes if len(self.workspace.detected_boxes) > 0 \
             else self.workspace.generated_boxes
-        rect_objects = [
-            RectObject(
+        pack_objects = [
+            PackInputObject(
                 id=i,
-                center_mm=(box.rect.w/2, box.rect.h/2),
-                angle_deg=0.0,
                 width=box.rect.w,
-                height=box.rect.h,
-                z=0.0
+                height=box.rect.h
             ) for i, box in enumerate(boxes_to_pack)
         ]
         task = PackingInputTask(
             PackingContainer(*self.storage_box.rect.size),
-            PackingInputTask.from_rect_objects(rect_objects)
+            pack_objects
         )
 
         result = packer.pack(task)
-        self.storage_box.placeables = [DrawableRect(pygame.Rect(rect.left, rect.top, rect.width, rect.height)) for rect in
+        self.storage_box.placeables = [DrawableRect(pygame.Rect(int(obj.left), int(obj.top), int(obj.width), int(obj.height))) for obj in
                                        result]
 
 

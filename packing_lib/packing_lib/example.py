@@ -54,21 +54,30 @@ def generate_fake_detected_objects(count: int, container: PackingContainer, min_
 
 
 if __name__ == "__main__":
-    container = PackingContainer(190 * 2, 110 * 2)
+    scale = 2
+    container = PackingContainer(190 * scale, 110 * scale)
     input_dir = "../../in/"
     output_dir = "../../out/"
 
-    # frame = cv2.imread(input_dir + "det7.jpg")
-    # aruco = ArucoBoxDetector(23, AppConfig.camera_matrix, AppConfig.dist_coeffs)
-    # yolo = YoloBoxDetector()
-    # processor = SceneProcessor(aruco, yolo)
-    # result = processor.process(frame)
-    # detected_objects = result.converted_objects
+    frame = cv2.imread(input_dir + "det2.jpg")
+    aruco = ArucoBoxDetector(23, AppConfig.camera_matrix, AppConfig.dist_coeffs)
+    yolo = YoloBoxDetector()
+    processor = SceneProcessor(aruco, yolo)
+    result = processor.process(frame)
+    detected_objects = result.converted_objects
+
+    # Визуализация исходного кадра с детекцией (для реальных данных)
+    visualizer = SceneProcessVisualizer()
+    visualized = visualizer.visualize(frame, result)
+    scale = 0.8
+    resized = cv2.resize(visualized, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+    cv2.imshow("Scene", resized)
+    cv2.waitKey(0)
 
     # Генерируем фейковые объекты детекции (имитируем реальный сценарий)
-    detected_objects = generate_fake_detected_objects(
-        count=40, container=container, min_size=10, max_size=80
-    )
+    # detected_objects = generate_fake_detected_objects(
+    #     count=40, container=container, min_size=10, max_size=80
+    # )
 
 
     task = PackingInputTask(container, PackingInputTask.from_rect_objects(detected_objects))
@@ -76,10 +85,10 @@ if __name__ == "__main__":
     # Используем масштабирование для лучшей визуализации
     # Можно попробовать разные режимы:
     # packer = PhysPacker(headless=True)  # максимальная скорость
-    packer = PhysPacker(headless=False, simulation_speed=10.0)  # ускоренная визуализация
+    # packer = PhysPacker(headless=False, simulation_speed=0.3)  # ускоренная визуализация
     # packer = PhysPacker(headless=False, simulation_speed=1.0)
     # packer = ExactORToolsPacker()
-    # packer = NFDHPacker()
+    packer = NFDHPacker()
     print("started")
     placed_objects = packer.pack(task)
     print("packed")
@@ -107,8 +116,3 @@ if __name__ == "__main__":
     else:
         print("All objects were successfully packed!")
 
-    # Визуализация исходного кадра с детекцией (для реальных данных)
-    # visualizer = SceneProcessVisualizer()
-    # visualized = visualizer.visualize(frame, result)
-    # cv2.imshow("Scene", visualized)
-    # cv2.waitKey(0)
