@@ -1,5 +1,5 @@
 import random
-from typing import List
+from typing import List, Tuple
 
 import cv2
 import numpy
@@ -7,8 +7,7 @@ import numpy as np
 import pygame
 
 from app.common import Colors
-from app.custom_elements.DrawableRect import DrawableRect
-from packing_lib.packing_lib.types import ArucoResult, RawObject, PackInputObject
+from packing_lib.packing_lib.types import ArucoResult, RawObject, RectObject, PackInputObject
 
 
 class Workspace:
@@ -18,13 +17,14 @@ class Workspace:
         self.border_color = Colors.BLACK
         self.border_width = 2
 
-        self.generated_boxes: List[DrawableRect] = []
-        self.detected_boxes: List[DrawableRect] = []
+        self.generated_boxes: List[Tuple[pygame.Rect, Tuple[int, int, int]]] = []  # (rect, color)
+        self.detected_boxes: List[RectObject] = []
 
         self.boxes: List[RawObject] = []
         self.converted_boxes: List[PackInputObject] = []
 
         self.detected_markers: List[ArucoResult] = []
+        self.is_calibrated = False
 
         self.camera_frame: numpy.ndarray | None = None
         self._camera_frame_scale_factor = 1
@@ -50,7 +50,7 @@ class Workspace:
             y_pos = random.randint(0, self.rect.height - height)
             color = random.choice(Colors.RECTANGLE_COLORS)
 
-            self.generated_boxes.append(DrawableRect(pygame.Rect(x_pos, y_pos, width, height), back_color=color))
+            self.generated_boxes.append((pygame.Rect(x_pos, y_pos, width, height), color))
 
     def draw(self, surface: pygame.Surface):
         surface.blit(self._render(), self.rect.topleft)
@@ -81,6 +81,7 @@ class Workspace:
         self.subsurface.blit(image_surface, (0, 0))
         self._draw_boxes()
         self._draw_markers()
+        self._draw_calibration_indicator()
 
     def _draw_markers(self):
         for marker in self.detected_markers:
@@ -89,11 +90,27 @@ class Workspace:
 
     def _draw_boxes(self):
         for rect in self.boxes:
-            points = (rect.bounding_box * self._camera_frame_scale_factor).astype(int).tolist()
+            box_points = cv2.boxPoints(rect.bounding_box)
+            points = (box_points * self._camera_frame_scale_factor).astype(int).tolist()
             pygame.draw.polygon(self.subsurface, Colors.GREEN, points, 2)
 
     def _draw_generated_boxes(self):
-        for box in self.generated_boxes:
-            pygame.draw.rect(self.subsurface, box.back_color, box.rect)
-            # points = (rect * self._camera_frame_scale_factor).astype(int).tolist()
-            # pygame.draw.polygon(self.subsurface, Colors.GREEN, points, 2)
+        for rect, color in self.generated_boxes:
+            pygame.draw.rect(self.subsurface, color, rect)
+            pygame.draw.rect(self.subsurface, Colors.BLACK, rect, 1)
+    
+    def _draw_calibration_indicator(self):
+        """Отрисовывает индикатор статуса калибровки поверх изображения"""
+        # Позиция индикатора в правом верхнем углу
+        indicator_size = 15
+        margin = 10
+        x = self.rect.width - indicator_size - margin
+        y = margin
+        
+        # Цвет зависит от статуса калибровки
+        color = Colors.GREEN if self.is_calibrated else Colors.RED
+        
+        # Рисуем круглый индикатор поверх изображения
+        center = (x + indicator_size // 2, y + indicator_size // 2)
+        pygame.draw.circle(self.subsurface, color, center, indicator_size // 2)
+        pygame.draw.circle(self.subsurface, Colors.BLACK, center, indicator_size // 2, 2)

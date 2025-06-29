@@ -18,10 +18,10 @@ class AppConfig:
     def dist_coeffs():
         return np.zeros((5, 1), dtype=np.float64)
 
-    stream_url = 'http://192.168.137.60:4747/video'
-    box_width = 0.4
-    box_height = 0.4
-    aruco_marker_real_size = 0.023
+    stream_url = 'http://192.168.137.181:4747/video'
+    box_width = 400
+    box_height = 400
+    aruco_marker_real_size = 23
     aruco_dict = cv2.aruco.DICT_ARUCO_ORIGINAL
     camera_matrix = camera_matrix()
     dist_coeffs = dist_coeffs()

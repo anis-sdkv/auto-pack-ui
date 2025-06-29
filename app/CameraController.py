@@ -10,7 +10,7 @@ from app.AppConfig import AppConfig
 from packing_lib.packing_lib.SceneProcessor import SceneProcessor
 from packing_lib.packing_lib.detectors.ArucoDetector import ArucoBoxDetector, ArucoResult
 from packing_lib.packing_lib.detectors.YoloBoxDetector import YoloBoxDetector
-from packing_lib.packing_lib.types import PackInputObject
+from packing_lib.packing_lib.types import PackInputObject, RectObject
 
 
 class ActionState(Enum):
@@ -39,10 +39,11 @@ class CameraController:
         self.latest_frame: numpy.ndarray | None = None
         self.detected_boxes = []
         self.detected_markers: list[ArucoResult] = []
-        self.converted_boxes: list[PackInputObject] = []
+        self.converted_boxes: list[RectObject] = []
 
         self.capture_thread = None
         self.processing_thread = None
+        self.capture_paused = False
 
         self.on_camera_connected = []
         self.on_camera_connected.append(self._start_capture)
@@ -63,6 +64,16 @@ class CameraController:
         self.processing_thread = threading.Thread(target=self._processing_loop, daemon=True)
         self.processing_thread.start()
 
+    def pause_capture(self):
+        """Приостанавливает получение кадров с камеры"""
+        if self.capturing == ActionState.STARTED:
+            self.capture_paused = True
+
+    def resume_capture(self):
+        """Возобновляет получение кадров с камеры"""
+        if self.capturing == ActionState.STARTED:
+            self.capture_paused = False
+
     def stop_processing(self):
         if self.processing != ActionState.STARTED:
             return
@@ -76,6 +87,7 @@ class CameraController:
         self.stop_processing()
 
         self.capturing = ActionState.STOPPING
+        self.capture_paused = False
         self.capture_thread.join()
         self.cap.release()
         self.latest_frame = None
@@ -106,6 +118,10 @@ class CameraController:
         with self.lock:
             return self.detected_markers.copy()
 
+    def get_calibration_status(self) -> bool:
+        with self.lock:
+            return len(self.converted_boxes) > 0 and len(self.converted_boxes) == len(self.detected_boxes)
+
     def _try_connect_camera(self, on_connected_callbacks, max_retries=5, delay=2):
         self.connection_status = "Подключение к камере..."
         for i in range(max_retries):
@@ -128,6 +144,11 @@ class CameraController:
     def _capture_loop(self):
         self.capturing = ActionState.STARTED
         while self.capturing == ActionState.STARTED:
+            # Если capture приостановлен, просто ждем
+            if self.capture_paused:
+                time.sleep(0.1)
+                continue
+                
             ret, frame = self.cap.read()
             if not ret:
                 continue

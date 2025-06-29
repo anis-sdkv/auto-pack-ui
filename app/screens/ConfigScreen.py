@@ -5,7 +5,6 @@ from pygame import Rect, Event
 
 from app.AppContext import AppContext
 from app.common import Colors
-from app.screens.MainScreen import MainScreen
 from app.screens.base.ScreenBase import ScreenBase
 
 
@@ -51,10 +50,10 @@ class ConfigScreen(ScreenBase):
         label("Ссылка на IP-камеру", start_y)
         self.stream_input = input_field(start_y + 25, self.config.stream_url)
 
-        label("Ширина ящика (см)", start_y + spacing)
+        label("Ширина ящика (мм)", start_y + spacing)
         self.box_width_input = input_field(start_y + spacing + 25, str(self.config.box_width))
 
-        label("Высота ящика (см)", start_y + spacing * 2)
+        label("Высота ящика (мм)", start_y + spacing * 2)
         self.box_height_input = input_field(start_y + spacing * 2 + 25, str(self.config.box_height))
 
         self.message_label = UITextBox(
@@ -87,6 +86,8 @@ class ConfigScreen(ScreenBase):
             self.config.box_height = height
             print("Настройки применены:", self.config)
 
+            # Локальный импорт для избежания циклической зависимости
+            from app.screens.MainScreen import MainScreen
             self.screen_manager.switch_to(MainScreen)
 
 
