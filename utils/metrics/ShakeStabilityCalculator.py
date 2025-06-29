@@ -4,18 +4,17 @@ import pygame
 import pymunk
 import pymunk.pygame_util
 
-from utils.PackingDataV2 import PackingDataV2
+from utils.PackingData import PackingData
 
 
 class ShakeStabilityCalculator:
-    def __init__(self, data: PackingDataV2):
+    def __init__(self, data: PackingData):
         self.box_width = data.box_width
         self.box_height = data.box_height
         self.objects = data.objects
         self.space = pymunk.Space()
         self.bodies = []
 
-        # Настройка pygame
         pygame.init()
         self.screen = pygame.display.set_mode((int(self.box_width), int(self.box_height)))
         pygame.display.set_caption("Shake Stability Visualization")
@@ -28,23 +27,18 @@ class ShakeStabilityCalculator:
             self.correct_object_position(obj, self.box_width, self.box_height)
 
     def correct_object_position(self, obj, box_width, box_height, margin=1):
-        # Сдвигаем влево, если вылазит за левую границу
         if obj['x'] < margin:
             obj['x'] = margin
-        # Сдвигаем вправо, если вылазит за правую границу
         if obj['x'] + obj['w'] > box_width - margin:
             obj['x'] = box_width - obj['w'] - margin
-        # Сдвигаем вверх, если вылазит за верхнюю границу
         if obj['y'] < margin:
             obj['y'] = margin
-        # Сдвигаем вниз, если вылазит за нижнюю границу
         if obj['y'] + obj['h'] > box_height - margin:
             obj['y'] = box_height - obj['h'] - margin
 
     def setup_scene(self):
         self.correct_positions()
 
-        # Создаем границы контейнера
         points = [
             (0, 0),
             (self.box_width, 0),
@@ -62,7 +56,6 @@ class ShakeStabilityCalculator:
             line.friction = 0.5
             self.space.add(line)
 
-        # Добавляем объекты как динамические тела
         for obj in self.objects:
             mass = 100
             width = obj['w']

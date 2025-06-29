@@ -7,12 +7,12 @@ from app.AppConfig import AppConfig
 from packing_lib.packing_lib.SceneProcessor import SceneProcessor
 from packing_lib.packing_lib.detectors.ArucoDetector import ArucoBoxDetector
 from packing_lib.packing_lib.detectors.YoloBoxDetector import YoloBoxDetector
+from packing_lib.packing_lib.manipulator.ManipulatorInstructionGenerator import ManipulatorInstructionGenerator
 from packing_lib.packing_lib.packers.ExactORToolsPacker import ExactORToolsPacker
 from packing_lib.packing_lib.packers.NFDHPacker import NFDHPacker
 from packing_lib.packing_lib.packers.PhysPacker import PhysPacker
 from packing_lib.packing_lib.types import SceneProcessResult, PackingInputTask, PackInputObject, PackingContainer
 from packing_lib.packing_lib.visualization.PlacedObjectsVisualizer import PlacedObjectsVisualizer
-from packing_lib.packing_lib.manipulation.ManipulatorInstructionGenerator import ManipulatorInstructionGenerator
 from packing_lib.packing_lib.visualization.SceneProcessVisualizer import SceneProcessVisualizer
 
 

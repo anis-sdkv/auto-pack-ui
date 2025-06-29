@@ -1,10 +1,10 @@
 import math
 
-from utils.PackingDataV2 import PackingDataV2
+from utils.PackingData import PackingData
 
 
 class CenterOfMassShiftCalculator:
-    def __init__(self, data: PackingDataV2):
+    def __init__(self, data: PackingData):
         self.box_width = data.box_width
         self.box_height = data.box_height
         self.objects = data.objects
@@ -16,8 +16,8 @@ class CenterOfMassShiftCalculator:
 
         for obj in self.objects:
             Ai = obj['w'] * obj['h']
-            xi = obj['x'] + obj['w'] / 2  # центр объекта по x
-            yi = obj['y'] + obj['h'] / 2  # центр объекта по y
+            xi = obj['x'] + obj['w'] / 2
+            yi = obj['y'] + obj['h'] / 2
             sum_Ai_xi += Ai * xi
             sum_Ai_yi += Ai * yi
             sum_Ai += Ai
@@ -31,7 +31,6 @@ class CenterOfMassShiftCalculator:
         return (Cx, Cy)
 
     def calculate_center_of_mass_container(self):
-        # Центр прямоугольника по оси X и Y
         return (self.box_width / 2, self.box_height / 2)
 
     def calculate_shift(self):

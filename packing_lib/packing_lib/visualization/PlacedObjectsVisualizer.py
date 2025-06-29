@@ -15,10 +15,8 @@ class PlacedObjectsVisualizer:
         self._color_cache = {}
     
     def _get_color_for_id(self, obj_id: int) -> str:
-        """Генерирует стабильный цвет для объекта по его ID"""
         if obj_id not in self._color_cache:
             rng = random.Random(obj_id)
-            # Генерируем приятные цвета
             colors = ['skyblue', 'lightgreen', 'lightcoral', 'lightsalmon', 
                      'lightpink', 'lightgray', 'lightyellow', 'lightcyan',
                      'plum', 'wheat', 'khaki', 'lavender']
@@ -30,19 +28,8 @@ class PlacedObjectsVisualizer:
                   show_metrics: bool = True,
                   show_grid: bool = True,
                   figsize: tuple = (10, 8)) -> None:
-        """
-        Визуализирует результат упаковки
-        
-        Args:
-            placed_objects: Список размещенных объектов
-            title: Заголовок графика
-            show_metrics: Показывать метрики упаковки
-            show_grid: Показывать сетку
-            figsize: Размер фигуры
-        """
         fig, ax = plt.subplots(figsize=figsize)
         
-        # Настройка осей
         ax.set_xlim(0, self.container.width)
         ax.set_ylim(0, self.container.height)
         ax.set_aspect('equal')
@@ -50,7 +37,6 @@ class PlacedObjectsVisualizer:
         if show_grid:
             ax.grid(True, alpha=0.3)
         
-        # Рисуем контейнер
         container_rect = patches.Rectangle(
             (0, 0),
             self.container.width,
@@ -61,12 +47,11 @@ class PlacedObjectsVisualizer:
         )
         ax.add_patch(container_rect)
         
-        # Рисуем объекты
         for obj in placed_objects:
             color = self._get_color_for_id(obj.id)
             
             rect = patches.Rectangle(
-                (obj.left, obj.top),  # используем свойства left/top
+                (obj.left, obj.top),
                 obj.width,
                 obj.height,
                 linewidth=1,
@@ -76,15 +61,12 @@ class PlacedObjectsVisualizer:
             )
             ax.add_patch(rect)
             
-            # Добавляем ID в центр объекта (центр уже известен)
             ax.text(obj.center_x, obj.center_y, str(obj.id),
                    ha='center', va='center', fontweight='bold',
                    fontsize=8, color='black')
         
-        # Инвертируем Y-ось для соответствия пиксельным координатам
         ax.invert_yaxis()
         
-        # Заголовок с метриками
         if show_metrics:
             metrics = self._calculate_metrics(placed_objects)
             title_with_metrics = f"{title}\n{metrics}"
@@ -99,7 +81,6 @@ class PlacedObjectsVisualizer:
         plt.show()
     
     def _calculate_metrics(self, placed_objects: List[PlacedObject]) -> str:
-        """Вычисляет метрики упаковки"""
         if not placed_objects:
             return "Objects: 0, Density: 0%"
         
@@ -116,21 +97,9 @@ class PlacedObjectsVisualizer:
              show_grid: bool = True,
              figsize: tuple = (10, 8),
              dpi: int = 300) -> None:
-        """
-        Сохраняет визуализацию в файл
-        
-        Args:
-            placed_objects: Список размещенных объектов
-            filepath: Путь для сохранения
-            title: Заголовок графика
-            show_metrics: Показывать метрики упаковки
-            show_grid: Показывать сетку
-            figsize: Размер фигуры
-            dpi: Разрешение изображения
-        """
+
         fig, ax = plt.subplots(figsize=figsize)
         
-        # Тот же код отрисовки что и в visualize()
         ax.set_xlim(0, self.container.width)
         ax.set_ylim(0, self.container.height)
         ax.set_aspect('equal')
@@ -152,7 +121,7 @@ class PlacedObjectsVisualizer:
             color = self._get_color_for_id(obj.id)
             
             rect = patches.Rectangle(
-                (obj.left, obj.top),  # используем свойства left/top
+                (obj.left, obj.top),
                 obj.width,
                 obj.height,
                 linewidth=1,
@@ -161,8 +130,7 @@ class PlacedObjectsVisualizer:
                 alpha=0.7
             )
             ax.add_patch(rect)
-            
-            # Добавляем ID в центр объекта (центр уже известен)
+
             ax.text(obj.center_x, obj.center_y, str(obj.id),
                    ha='center', va='center', fontweight='bold',
                    fontsize=8, color='black')

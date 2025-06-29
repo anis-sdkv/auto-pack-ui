@@ -6,10 +6,9 @@ import numpy as np
 
 
 class SortOrder(Enum):
-    """Порядок сортировки объектов при сбросе в физическую симуляцию"""
-    DESCENDING = "descending"  # по убыванию (крупные вниз) - дефолт
-    ASCENDING = "ascending"    # по возрастанию (мелкие вниз)
-    RANDOM = "random"          # случайный порядок
+    DESCENDING = "descending"
+    ASCENDING = "ascending"
+    RANDOM = "random"
 
 
 @dataclass
@@ -32,21 +31,18 @@ class PackingContainer:
 @dataclass
 class PlacedObject:
     id: int
-    center_x: float  # центр объекта
-    center_y: float  # центр объекта
+    center_x: float
+    center_y: float
     width: float
     height: float
-    
+
     @property
     def left(self) -> float:
-        """Координата левой границы объекта"""
         return self.center_x - self.width / 2
-    
+
     @property
     def top(self) -> float:
-        """Координата верхней границы объекта"""
         return self.center_y - self.height / 2
-
 
 
 @dataclass
@@ -94,29 +90,26 @@ class PackingInputTask:
 
 @dataclass
 class InputInstruction:
-    """Параметры захвата объекта"""
-    x: float      # координаты центра в сцене
-    y: float      
-    z: float      # расстояние до объекта
-    theta: float  # угол ориентации (градусы)
-    w: float      # исходные размеры
+    x: float
+    y: float
+    z: float
+    theta: float
+    w: float
     h: float
 
 
-@dataclass  
+@dataclass
 class OutputInstruction:
-    """Параметры размещения объекта в контейнере"""
-    x: float      # координаты в контейнере
+    x: float
     y: float
-    z: float      # высота сброса (пока заглушка)
-    theta: float  # угол поворота (0°, 90°, 180°, 270°)
-    w: float      # размеры после поворота
+    z: float
+    theta: float
+    w: float
     h: float
 
 
 @dataclass
 class ManipulatorInstruction:
-    """Полная инструкция для манипулятора: захват + размещение"""
     id: int
     input: InputInstruction
     output: OutputInstruction

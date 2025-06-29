@@ -1,10 +1,10 @@
 import os
 import statistics
 
-from utils.PackingDataV2 import PackingDataV2
-from utils.metricsV2.CenterOfMassShiftCalculator import CenterOfMassShiftCalculator
-from utils.metricsV2.PlacementDensityCalculator import PlacementDensityCalculator
-from utils.metricsV2.ShakeStabilityCalculator import ShakeStabilityCalculator
+from utils.PackingData import PackingData
+from utils.metrics.CenterOfMassShiftCalculator import CenterOfMassShiftCalculator
+from utils.metrics.PlacementDensityCalculator import PlacementDensityCalculator
+from utils.metrics.ShakeStabilityCalculator import ShakeStabilityCalculator
 
 
 def print_results(dir):
@@ -14,7 +14,7 @@ def print_results(dir):
 
     for file in os.listdir(dir):
         fullpath = f"{dir}/{file}"
-        data = PackingDataV2.load_from_file(fullpath)
+        data = PackingData.load_from_file(fullpath)
 
         density = PlacementDensityCalculator(data)
         density_res.append(density.calculate_density())
@@ -25,7 +25,6 @@ def print_results(dir):
         shake = ShakeStabilityCalculator(data)
         shake_res.append(shake.calculate_average_displacement())
 
-   # Расчет и вывод результатов
     def print_stat(name, values):
         if not values:
             print(f"{name}: Нет данных")

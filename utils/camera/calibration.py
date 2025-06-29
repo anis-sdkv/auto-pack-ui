@@ -12,23 +12,21 @@ def scale_camera_matrix(K, original_shape, new_shape):
     scale_y = h1 / h0
 
     K_scaled = K.copy()
-    K_scaled[0, 0] *= scale_x   # fx
-    K_scaled[1, 1] *= scale_y   # fy
-    K_scaled[0, 2] *= scale_x   # cx
-    K_scaled[1, 2] *= scale_y   # cy
+    K_scaled[0, 0] *= scale_x
+    K_scaled[1, 1] *= scale_y
+    K_scaled[0, 2] *= scale_x
+    K_scaled[1, 2] *= scale_y
 
     return K_scaled
 
-# параметры шаблона
 CHECKERBOARD = (9, 6)
 square_size = 40.0  # мм
 
-# подготовка объектов (в реальных координатах)
 objp = np.zeros((CHECKERBOARD[0]*CHECKERBOARD[1], 3), np.float32)
 objp[:, :2] = np.mgrid[0:CHECKERBOARD[0], 0:CHECKERBOARD[1]].T.reshape(-1, 2) * square_size
 
-objpoints = []  # 3D точки в мире
-imgpoints = []  # 2D точки на изображении
+objpoints = []
+imgpoints = []
 
 images = glob.glob('calib_images/*.jpg')
 
@@ -51,7 +49,6 @@ for i, fname in enumerate(images):
         objpoints.append(objp)
         imgpoints.append(corners)
 
-        # рисуем и сохраняем
         cv2.drawChessboardCorners(img, CHECKERBOARD, corners, ret)
         output_path = os.path.join(output_dir, f"frame_{i:02d}.jpg")
         cv2.imwrite(output_path, img)
@@ -60,10 +57,8 @@ for i, fname in enumerate(images):
 
 cv2.destroyAllWindows()
 
-# калибровка
 ret, K, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
-# сохранить
 np.savez("calibration.npz", camera_matrix=K, dist_coeffs=dist)
 print("camera_matrix:\n", K)
 print("distortion coefficients:\n", dist)

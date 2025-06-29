@@ -5,11 +5,11 @@ from typing import List
 from packing_lib.packing_lib.interfaces.BasePacker import BasePacker
 from packing_lib.packing_lib.packers.ExactORToolsPacker import ExactORToolsPacker
 from packing_lib.packing_lib.packers.NFDHPacker import NFDHPacker
-from packing_lib.packing_lib.types import PackingInputTask, PackingContainer, PackInputObject, PlacedObject
-from utils.PackingDataV2 import PackingDataV2
+from packing_lib.packing_lib.types import PackingInputTask, PackingContainer, PackInputObject, PlacedObject, RectObject
+from utils.PackingData import PackingData
 
 
-class BenchmarkV2:
+class Benchmark:
     def __init__(self, base_path: str, packers: List[BasePacker]):
         self.base_path = base_path
         self.packers = packers
@@ -56,14 +56,14 @@ class BenchmarkV2:
         return objects
 
     def save(self, packed: List[PlacedObject], path: str):
-        packing_data = PackingDataV2(self.container_width, self.container_height)
+        packing_data = PackingData(self.container_width, self.container_height)
         packing_data.clear()
         packing_data.add_objects(packed)
         packing_data.save_to_file(path)
 
 
 if __name__ == "__main__":
-    bench = BenchmarkV2(
+    bench = Benchmark(
         base_path="../out/bench",
         packers=[
             NFDHPacker(),

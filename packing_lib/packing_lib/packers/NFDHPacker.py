@@ -24,7 +24,6 @@ class NFDHPacker(BasePacker):
             if y_cursor + obj.height > task.container.height:
                 continue
 
-            # Конвертируем левый верх в центр
             center_x = x_cursor + obj.width / 2
             center_y = y_cursor + obj.height / 2
             

@@ -47,7 +47,6 @@ def load_and_draw_grid(dir_path):
 
         draw_objects_on_axes(axes[i], data, title=filename)
 
-    # Отключаем пустые ячейки, если они есть
     for j in range(len(files), len(axes)):
         axes[j].axis('off')
 

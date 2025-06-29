@@ -47,11 +47,6 @@ class PhysicsEngine:
         self.space.damping = self.config.space_damping
         self.space.iterations = self.config.space_iterations
         self.space.collision_slop = self.config.space_collision_slop
-        self._setup_collision_handler()
-
-    def _setup_collision_handler(self):
-        self.collision_handler = self.space.add_default_collision_handler()
-        self.collision_handler.begin = self._on_collision_begin
 
     @staticmethod
     def _on_collision_begin(arbiter, space, data):

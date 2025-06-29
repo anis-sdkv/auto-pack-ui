@@ -4,7 +4,7 @@ from typing import List
 from packing_lib.packing_lib.types import PlacedObject
 
 
-class PackingDataV2:
+class PackingData:
     def __init__(self, box_width: float, box_height: float):
         self.box_width = box_width
         self.box_height = box_height
@@ -46,6 +46,6 @@ class PackingDataV2:
     def load_from_file(filename: str):
         with open(filename, 'r') as f:
             data = json.load(f)
-        packing_data = PackingDataV2(data['box_width'], data['box_height'])
+        packing_data = PackingData(data['box_width'], data['box_height'])
         packing_data.objects = data['objects']
         return packing_data
