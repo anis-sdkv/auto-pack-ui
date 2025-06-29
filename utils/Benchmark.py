@@ -1,90 +1,73 @@
-import copy
-import math
 import random
-import pygame
+import os
+from typing import List
 
-from packing_lib.packing_lib._phys_engine.PhysicsEngine import PhysicsEngine
+from packing_lib.packing_lib.interfaces.BasePacker import BasePacker
+from packing_lib.packing_lib.packers.ExactORToolsPacker import ExactORToolsPacker
 from packing_lib.packing_lib.packers.NFDHPacker import NFDHPacker
-from utils.PackingData import PackingData
+from packing_lib.packing_lib.types import PackingInputTask, PackingContainer, PackInputObject, PlacedObject
+from utils.PackingDataV2 import PackingDataV2
 
 
-class Benchmark:
-    def __init__(self, base_path):
+class BenchmarkV2:
+    def __init__(self, base_path: str, packers: List[BasePacker]):
         self.base_path = base_path
-        self.width = 400
-        self.height = 400
-        self.boxes_to_pack = []
+        self.packers = packers
+        self.container_width = 200
+        self.container_height = 200
+        self.container = PackingContainer(self.container_width, self.container_height)
 
-        self.greedy_packer = NFDHPacker(self.width, self.height)
-        self.phys_engine = PhysicsEngine(pygame.Rect(0, 0, self.width, self.height),
-                                         pygame.Surface((self.width, self.height)))
-        self.packing_data = PackingData(self.width, self.height)
+    def start_bench(self, dataset_name: str, num_samples: int = 10, num_objects: int = 40):
+        for packer in self.packers:
+            packer_name = self._get_packer_name(packer)
+            print(f"Benchmarking {packer_name}...")
 
-        self.path_for_greedy = None
+            for i in range(num_samples):
+                rect_objects = self.create_random_items(num_objects)
+                task = PackingInputTask(self.container, PackingInputTask.from_rect_objects(rect_objects))
+                packed = packer.pack(task)
 
-    def start_bench(self, dataset_name):
-        self.create_random_items(40)
-        samples = 10
+                dir_path = os.path.join(self.base_path, f"dataset_{dataset_name}", packer_name)
+                os.makedirs(dir_path, exist_ok=True)
+                file_path = os.path.join(dir_path, f"launch_{i}.json")
 
-        for i in range(samples):
-            self.path_for_greedy = f"{self.base_path}/dataset_{dataset_name}/greedy/launch_{i}.json"
-            self.process_greedy()
+                self.save(packed, file_path)
 
-        for i in range(samples):
-            path = f"{self.base_path}/dataset_{dataset_name}/phys/launch_{i}.json"
-            self.process_phys(path)
+    def _get_packer_name(self, packer) -> str:
+        return packer.__class__.__name__.replace("Packer", "").lower()
 
-    def create_random_items(self, count: int):
+    def create_random_items(self, count: int) -> List[RectObject]:
+        objects = []
         for i in range(count):
-            width, height = random.randint(30, 100), random.randint(30, 100)
-            x_pos = random.randint(0, self.width - width)
-            y_pos = random.randint(0, self.height - height)
+            w = random.randint(30, 100)
+            h = random.randint(30, 100)
+            cx = random.uniform(w / 2, self.container_width - w / 2)
+            cy = random.uniform(h / 2, self.container_height - h / 2)
 
-            self.boxes_to_pack.append(DrawableRect(pygame.Rect(x_pos, y_pos, width, height)))
+            obj = RectObject(
+                id=i,
+                center_mm=(cx, cy),
+                angle_deg=0.0,
+                width=w,
+                height=h,
+                z=0.0,
+            )
+            objects.append(obj)
+        return objects
 
-    def process_phys(self, path):
-        self.phys_engine = PhysicsEngine(pygame.Rect(0, 0, self.width, self.height),
-                                         pygame.Surface((self.width, self.height)))
-        print("phys started")
-        self.phys_engine.add_rects(self.boxes_to_pack)
-
-        clock = pygame.time.Clock()
-        fps = 60
-
-        while not self.phys_engine.done:
-            time_delta = clock.tick(fps) / 1000.0
-            self.phys_engine.update(1)
-
-        print("phys end")
-        packed = self.extract()
-        packed = [i for i in packed if i.rect.y >= 0]
-        self.save(packed, path)
-
-    def extract(self):
-        placed_rects = []
-        for rect, body, shape in self.phys_engine.get_drawable_objects():
-            surface = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
-            angle_degrees = -body.angle * 180 / math.pi
-            rotated = pygame.transform.rotate(surface, angle_degrees)
-            rotated_rect = rotated.get_rect(center=(int(body.position.x), int(body.position.y)))
-
-            new_rect = copy.deepcopy(shape.source_object)
-            new_rect.rect = rotated_rect
-            placed_rects.append(new_rect)
-        return placed_rects
-
-    def process_greedy(self):
-        self.greedy_packer.start(self.boxes_to_pack, self._on_packing_completed)
-
-    def save(self, packed, path):
-        self.packing_data.clear()
-        self.packing_data.add_objects(packed)
-        self.packing_data.save_to_file(path)
-
-    def _on_packing_completed(self, packed):
-        self.save(packed, self.path_for_greedy)
+    def save(self, packed: List[PlacedObject], path: str):
+        packing_data = PackingDataV2(self.container_width, self.container_height)
+        packing_data.clear()
+        packing_data.add_objects(packed)
+        packing_data.save_to_file(path)
 
 
 if __name__ == "__main__":
-    bench = Benchmark("../out/bench")
-    bench.start_bench("test2")
+    bench = BenchmarkV2(
+        base_path="../out/bench",
+        packers=[
+            NFDHPacker(),
+            ExactORToolsPacker()
+        ]
+    )
+    bench.start_bench(dataset_name="test_multi", num_samples=10, num_objects=9)

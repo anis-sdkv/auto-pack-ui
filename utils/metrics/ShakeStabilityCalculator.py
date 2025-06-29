@@ -1,13 +1,14 @@
 import math
 import random
-
 import pygame
 import pymunk
 import pymunk.pygame_util
 
+from utils.PackingDataV2 import PackingDataV2
+
 
 class ShakeStabilityCalculator:
-    def __init__(self, data):
+    def __init__(self, data: PackingDataV2):
         self.box_width = data.box_width
         self.box_height = data.box_height
         self.objects = data.objects
@@ -16,7 +17,7 @@ class ShakeStabilityCalculator:
 
         # Настройка pygame
         pygame.init()
-        self.screen = pygame.display.set_mode((self.box_width, self.box_height))
+        self.screen = pygame.display.set_mode((int(self.box_width), int(self.box_height)))
         pygame.display.set_caption("Shake Stability Visualization")
         self.draw_options = pymunk.pygame_util.DrawOptions(self.screen)
 
@@ -43,6 +44,7 @@ class ShakeStabilityCalculator:
     def setup_scene(self):
         self.correct_positions()
 
+        # Создаем границы контейнера
         points = [
             (0, 0),
             (self.box_width, 0),
@@ -60,7 +62,7 @@ class ShakeStabilityCalculator:
             line.friction = 0.5
             self.space.add(line)
 
-        # Добавим объекты как динамические тела
+        # Добавляем объекты как динамические тела
         for obj in self.objects:
             mass = 100
             width = obj['w']

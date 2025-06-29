@@ -27,7 +27,6 @@ class MainScreen(ScreenBase):
         self.camera_controller: CameraController = self.context.camera_controller
         self.camera_controller.on_camera_connected.append(self._on_camera_connected)
 
-        # Менеджер фоновых задач упаковки
         self.task_manager = PackingTaskManager()
         self.task_manager.add_status_callback(self._on_task_status_changed)
         self.task_manager.add_completion_callback(self._on_task_completed)
@@ -40,7 +39,7 @@ class MainScreen(ScreenBase):
             manager=self.context.ui_manager
         )
         self.status_box = elements.UITextBox(
-            html_text='Готов к упаковке',
+            html_text='',
             relative_rect=pygame.Rect(0, 0, 0, 0),
             manager=self.context.ui_manager
         )
@@ -50,22 +49,16 @@ class MainScreen(ScreenBase):
         self.update_layout(self.context.surface.size)
 
     def on_show(self):
-        """Вызывается при переходе на этот экран"""
-        # Пересоздаем все UI элементы (они были удалены при clear_and_reset)
         self._init_ui_elements()
 
-        # Восстанавливаем состояние из глобального хранилища
         self._restore_state_from_storage()
 
         self.update_layout(self.context.surface.size)
 
     def _save_state_to_storage(self):
-        """Сохраняет текущее состояние в глобальное хранилище"""
-        # Сохраняем объекты из storage_box
         if hasattr(self, 'storage_box') and self.storage_box:
             main_screen_state.set_storage_objects(getattr(self.storage_box, 'objects', []))
         
-        # Сохраняем состояние камеры включая resolution
         main_screen_state.save_camera_state(
             self.cam_fixed,
             getattr(self.workspace, 'detected_boxes', []),
@@ -76,21 +69,16 @@ class MainScreen(ScreenBase):
         )
 
     def _restore_state_from_storage(self):
-        """Восстанавливает состояние из глобального хранилища"""
-        # Восстанавливаем объекты в storage_box
         if main_screen_state.storage_objects:
             self.storage_box.set_objects(main_screen_state.storage_objects)
         
-        # Применяем отложенный результат физической упаковки если есть
         if main_screen_state.apply_physics_result():
             self.storage_box.set_objects(main_screen_state.storage_objects)
         
-        # Восстанавливаем camera resolution ПЕРВЫМ - это критично для правильного масштабирования
         if main_screen_state.camera_width is not None:
             self.workspace.set_camera_resolution(main_screen_state.camera_width, 
                                                int(main_screen_state.camera_width * main_screen_state.camera_resolution_ratio))
         
-        # Восстанавливаем состояние камеры
         self.cam_fixed = main_screen_state.cam_fixed
         if main_screen_state.detected_boxes:
             self.workspace.detected_boxes = main_screen_state.detected_boxes
@@ -99,7 +87,6 @@ class MainScreen(ScreenBase):
         if main_screen_state.camera_frame is not None:
             self.workspace.camera_frame = main_screen_state.camera_frame
         
-        # Устанавливаем статус
         try:
             self.status_box.set_text(main_screen_state.status_message)
         except Exception as e:
@@ -131,11 +118,9 @@ class MainScreen(ScreenBase):
         self.message_box.set_relative_position((message_x, message_y))
         self.message_box.set_dimensions((message_width, message_height))
 
-        # StorageBox занимает всю доступную ширину с сохранением aspect ratio
         storage_width = box_width
         storage_height = storage_width * self.storage_box.aspect_ratio
 
-        # Если не помещается по высоте, масштабируем по высоте
         max_height = screen_h - 2 * margin
         if storage_height > max_height:
             storage_height = max_height
@@ -145,7 +130,6 @@ class MainScreen(ScreenBase):
                                   int(storage_width), int(storage_height))
         self.storage_box.update_rect(new_storage)
 
-        # Status box под storage_box (аналогично message_box под workspace)
         status_margin_top = 10
         status_height = 60
         status_width = new_storage.width
@@ -170,7 +154,6 @@ class MainScreen(ScreenBase):
     def update(self, dt):
         self.message_box.set_text(self.camera_controller.connection_status)
 
-        # Проверяем результаты фоновых задач
         self.task_manager.check_results()
 
         cam_button_message = (
@@ -189,17 +172,14 @@ class MainScreen(ScreenBase):
         self.buttons_panel.process_button.set_text(process_button_message)
         self.buttons_panel.fix_cam_button.set_text(fix_cam_button_message)
 
-        # Управляем видимостью кнопки отмены
         status, _ = self.task_manager.get_current_status()
         if status == TaskStatus.RUNNING:
             self.buttons_panel.cancel_button.show()
-            # Блокируем кнопки упаковки
             self.buttons_panel.place_button.disable()
             self.buttons_panel.place_phys_button.disable()
             self.buttons_panel.place_exact_button.disable()
         else:
             self.buttons_panel.cancel_button.hide()
-            # Разблокируем кнопки упаковки
             self.buttons_panel.place_button.enable()
             self.buttons_panel.place_phys_button.enable()
             self.buttons_panel.place_exact_button.enable()
@@ -217,11 +197,9 @@ class MainScreen(ScreenBase):
         else:
             self.buttons_panel.fix_cam_button.disable()
 
-        # СНАЧАЛА проверяем фиксацию - если зафиксировано, НЕ обновляем кадр
         if self.cam_fixed:
             return
 
-        # ТОЛЬКО если НЕ зафиксировано - обновляем кадр и результаты обработки
         self.workspace.camera_frame = self.camera_controller.get_frame()
 
         if self.camera_controller.processing.STARTED:
@@ -284,7 +262,6 @@ class MainScreen(ScreenBase):
             return
         self.cam_fixed = not self.cam_fixed
         if not self.cam_fixed:
-            # Расфиксация - возобновляем capture и запускаем обработку
             self.camera_controller.resume_capture()
             self.camera_controller.start_processing()
             self.workspace.detected_boxes = []
@@ -293,23 +270,19 @@ class MainScreen(ScreenBase):
             main_screen_state.clear_camera_state()
             main_screen_state.status_message = status_msg
         else:
-            # Фиксация - сохраняем состояние и полностью останавливаем камеру
             converted_boxes = self.camera_controller.get_converted_boxes()
             current_frame = self.camera_controller.get_frame()
             
             self.workspace.detected_boxes = converted_boxes
             self.workspace.generated_boxes = []
-            # Фиксируем текущий кадр в workspace
             self.workspace.camera_frame = current_frame
             
-            # Останавливаем обработку и приостанавливаем capture
             self.camera_controller.stop_processing()
             self.camera_controller.pause_capture()
             
             status_msg = f"Готов к упаковке ({len(converted_boxes)} объектов распознано)"
             self.status_box.set_text(status_msg)
             
-            # Сохраняем состояние с зафиксированным кадром
             main_screen_state.save_camera_state(
                 self.cam_fixed,
                 converted_boxes,
@@ -327,7 +300,7 @@ class MainScreen(ScreenBase):
 
         def nfdh_packer_func(task_data, cancel_event):
             packer = NFDHPacker()
-            return packer.pack(task_data, cancel_event)
+            return packer.pack(task_data)
 
         task = PackingTask("nfdh", "NFDH упаковка", nfdh_packer_func, task_data)
         self.task_manager.start_task(task)
@@ -337,10 +310,8 @@ class MainScreen(ScreenBase):
         if not task_data:
             return
 
-        # Сохраняем текущее состояние в глобальное хранилище
         self._save_state_to_storage()
 
-        # Переходим на экран визуализации
         from app.screens.PhysVisualizationScreen import PhysVisualizationScreen
         self.screen_manager.switch_to(PhysVisualizationScreen, task_data)
 
@@ -352,16 +323,14 @@ class MainScreen(ScreenBase):
         def exact_packer_func(task_data, cancel_event):
             from packing_lib.packing_lib.packers.ExactORToolsPacker import ExactORToolsPacker
             packer = ExactORToolsPacker(time_limit_seconds=60, allow_rotation=True)
-            return packer.pack(task_data, cancel_event)
+            return packer.pack(task_data)
 
         task = PackingTask("exact", "Точная упаковка", exact_packer_func, task_data)
         self.task_manager.start_task(task)
 
     def _prepare_packing_task(self) -> PackingInputTask:
-        """Подготавливает данные для упаковки"""
         pack_objects = []
 
-        # Приоритет: зафиксированные объекты камеры, затем сгенерированные
         if self.cam_fixed and self.workspace.detected_boxes:
             pack_objects = [
                 PackInputObject(
@@ -371,7 +340,6 @@ class MainScreen(ScreenBase):
                 ) for obj in self.workspace.detected_boxes
             ]
         elif self.workspace.generated_boxes:
-            # Fallback для сгенерированных объектов
             pack_objects = [
                 PackInputObject(
                     id=i,
@@ -389,19 +357,15 @@ class MainScreen(ScreenBase):
             pack_objects
         )
 
-    # def _on_packing_completed(self, packed):
-    #     self.storage_box.placeables = packed
 
     def _on_camera_connected(self):
         resolution = self.camera_controller.get_camera_resolution()
         if resolution is not None:
             self.workspace.set_camera_resolution(*resolution)
-            # Сохраняем camera resolution в глобальное состояние
             main_screen_state.set_camera_resolution(*resolution)
             self.update_layout(self.surface.size)
 
     def _on_task_status_changed(self, status: TaskStatus, task_name: str):
-        """Обновляет UI при смене статуса задачи"""
         if status == TaskStatus.RUNNING:
             self.status_box.set_text(f"Выполняется: {task_name}...")
         elif status == TaskStatus.CANCELLED:
@@ -410,7 +374,6 @@ class MainScreen(ScreenBase):
             self.status_box.set_text("Готов к упаковке")
 
     def _on_task_completed(self, task: PackingTask):
-        """Обрабатывает завершение задачи"""
         try:
             if task.status == TaskStatus.COMPLETED and task.result:
                 self.storage_box.set_objects(task.result)

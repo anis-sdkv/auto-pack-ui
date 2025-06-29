@@ -1,8 +1,8 @@
-from utils import PackingData
+from utils.PackingDataV2 import PackingDataV2
 
 
 class PlacementDensityCalculator:
-    def __init__(self, data: PackingData):
+    def __init__(self, data: PackingDataV2):
         self.box_width = data.box_width
         self.box_height = data.box_height
         self.objects = data.objects

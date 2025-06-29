@@ -100,17 +100,13 @@ class Workspace:
             pygame.draw.rect(self.subsurface, Colors.BLACK, rect, 1)
     
     def _draw_calibration_indicator(self):
-        """Отрисовывает индикатор статуса калибровки поверх изображения"""
-        # Позиция индикатора в правом верхнем углу
         indicator_size = 15
         margin = 10
         x = self.rect.width - indicator_size - margin
         y = margin
         
-        # Цвет зависит от статуса калибровки
         color = Colors.GREEN if self.is_calibrated else Colors.RED
         
-        # Рисуем круглый индикатор поверх изображения
         center = (x + indicator_size // 2, y + indicator_size // 2)
         pygame.draw.circle(self.subsurface, color, center, indicator_size // 2)
         pygame.draw.circle(self.subsurface, Colors.BLACK, center, indicator_size // 2, 2)

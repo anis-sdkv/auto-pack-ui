@@ -19,7 +19,6 @@ class ConfigScreen(ScreenBase):
         panel_x = (screen_size[0] - self.panel_size[0]) // 2
         panel_y = (screen_size[1] - self.panel_size[1]) // 2
 
-        # Создаём панель-контейнер по центру
         self.panel = UIPanel(
             relative_rect=Rect((panel_x, panel_y), self.panel_size),
             manager=self.ui_manager
@@ -86,7 +85,6 @@ class ConfigScreen(ScreenBase):
             self.config.box_height = height
             print("Настройки применены:", self.config)
 
-            # Локальный импорт для избежания циклической зависимости
             from app.screens.MainScreen import MainScreen
             self.screen_manager.switch_to(MainScreen)
 
@@ -95,7 +93,6 @@ class ConfigScreen(ScreenBase):
             self.message_label.set_text("Ошибка: ширина и высота должны быть числами")
 
     def handle_resize(self, new_size):
-        # Центрируем панель заново
         panel_x = (new_size[0] - self.panel_size[0]) // 2
         panel_y = (new_size[1] - self.panel_size[1]) // 2
         self.panel.set_relative_position((panel_x, panel_y))

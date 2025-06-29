@@ -54,9 +54,8 @@ class ButtonsPanel:
     def update_layout(self):
         button_panel_x = self.rect.x
         
-        # Динамическое центрирование на основе количества кнопок
-        offset = 50  # Уменьшили отступ между кнопками
-        num_buttons = 9  # Общее количество кнопок
+        offset = 50
+        num_buttons = 9
         total_height = num_buttons * offset
         button_panel_y = (self.rect.height - total_height) // 2
 

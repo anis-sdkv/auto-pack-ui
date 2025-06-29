@@ -42,15 +42,13 @@ class PackingTaskManager:
         self.completion_callbacks.append(callback)
     
     def start_task(self, task: PackingTask) -> bool:
-        """Запускает задачу в фоновом потоке"""
         if self.current_task and self.current_task.status == TaskStatus.RUNNING:
-            return False  # Уже выполняется задача
+            return False
             
         self.current_task = task
         task.status = TaskStatus.RUNNING
         self._notify_status_change()
         
-        # Запускаем в отдельном потоке
         thread = threading.Thread(target=self._execute_task, args=(task,))
         thread.daemon = True
         thread.start()
@@ -58,7 +56,6 @@ class PackingTaskManager:
         return True
     
     def cancel_current_task(self):
-        """Отменяет текущую задачу"""
         if self.current_task and self.current_task.status == TaskStatus.RUNNING:
             self.current_task.cancel_event.set()
             self.current_task.status = TaskStatus.CANCELLED
@@ -66,13 +63,11 @@ class PackingTaskManager:
             self._notify_completion()
     
     def get_current_status(self) -> tuple:
-        """Возвращает (статус, название_задачи)"""
         if self.current_task:
             return self.current_task.status, self.current_task.name
         return TaskStatus.PENDING, ""
     
     def check_results(self):
-        """Проверяет результаты выполненных задач (вызывать из главного потока)"""
         try:
             while True:
                 task = self.result_queue.get_nowait()
@@ -82,18 +77,14 @@ class PackingTaskManager:
             pass
     
     def _execute_task(self, task: PackingTask):
-        """Выполняет задачу в фоновом потоке"""
         try:
-            # Проверяем отмену перед началом
             if task.cancel_event.is_set():
                 task.status = TaskStatus.CANCELLED
                 self.result_queue.put(task)
                 return
             
-            # Выполняем упаковку
             result = task.packer_func(task.task_data, task.cancel_event)
             
-            # Проверяем отмену после выполнения
             if task.cancel_event.is_set():
                 task.status = TaskStatus.CANCELLED
             else:
@@ -104,11 +95,9 @@ class PackingTaskManager:
             task.error = str(e)
             task.status = TaskStatus.ERROR
         
-        # Помещаем результат в очередь для обработки в главном потоке
         self.result_queue.put(task)
     
     def _notify_status_change(self):
-        """Уведомляет о смене статуса"""
         for callback in self.status_callbacks:
             try:
                 callback(self.current_task.status, self.current_task.name)
@@ -116,7 +105,6 @@ class PackingTaskManager:
                 print(f"Ошибка в status callback: {e}")
     
     def _notify_completion(self):
-        """Уведомляет о завершении задачи"""
         for callback in self.completion_callbacks:
             try:
                 callback(self.current_task)
